@@ -1,0 +1,2 @@
+{"timestamp": "2026-03-15T21:57:02.127514", "role": "Agent", "action": "input", "target_id": "com.app:id/address_input", "content": "北京市海淀区二月里小区三栋", "reason": "用户要求填写收货地址", "screenshot_path": ""}
+{"timestamp": "2026-03-15T21:57:03.128742", "role": "User", "action": "clear", "target_id": "com.app:id/address_input", "content": "", "reason": "", "screenshot_path": ""}
