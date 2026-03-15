@@ -1,0 +1,24 @@
+# MiniCPM-o 2.6 API runtime dependencies (Python 3.10)
+# Note: torchaudio cu118 wheel should be installed from PyTorch index.
+
+fastapi
+uvicorn
+Pillow==10.1.0
+
+# MiniCPM-o compatibility pins
+transformers==4.44.2
+huggingface_hub==0.24.7
+tokenizers==0.19.1
+
+# Model-side runtime imports
+soundfile==0.12.1
+librosa==0.9.0
+vector-quantize-pytorch==1.18.5
+vocos==0.1.0
+encodec==0.1.1
+einops==0.8.2
+einx==0.4.2
+frozendict==2.4.7
+
+# OCR
+rapidocr

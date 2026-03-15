@@ -1,0 +1,17 @@
+# 忽略模型文件（最占用空间，绝对不传）
+models/
+model_server/minicpm_o/ 
+
+# 忽略日志和截图
+logs/
+*.jpg
+*.png
+
+# 忽略数据库和缓存
+memory/chroma_storage/
+__pycache__/
+.ipynb_checkpoints/
+
+# 忽略环境和临时文件
+.vscode/
+.idea/
