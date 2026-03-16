@@ -1,15 +1,10 @@
 # Skills 接口定义
 
-本系统通过端侧 LLM 动态调度以下四类工具 (Skills)：
+本系统通过端侧 LLM 动态调度以下三类工具 (Skills)：
 
-- **PII_Detection_Skill**
-  - 功能：识别敏感实体（姓名、地址等）。
-  - 输入：原始屏幕图像。
-  - 输出：`List[{"label": str, "box": [x1, y1, x2, y2], "confidence": float}]`
-
-- **Visual_Obfuscation_Skill**
+- **Smart_Masker_Skill**
   - 功能：对图像区域执行脱敏操作。
-  - 输入：图像 + `List[box]` + 打码模式（模糊/马赛克）。
+  - 输入：图像 + 敏感信息。
   - 输出：脱敏后的安全图像。
 
 - **Behavior_Monitor_Skill**

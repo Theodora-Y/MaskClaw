@@ -1,0 +1,13 @@
+以下是检索到的信息：
+
+{retrieved_content}
+
+请判断哪些片段与用户的问题相关。
+
+用户问题：{user_question}
+
+请按格式输出：
+片段 1: [Relevant]
+片段 2: [Irrelevant]
+...
+（仅输出 [Relevant] 或 [Irrelevant]）

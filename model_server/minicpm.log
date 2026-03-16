@@ -1,0 +1,22 @@
+/root/miniconda3/lib/python3.10/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (1.26.13) or chardet (7.1.0)/charset_normalizer (2.0.4) doesn't match a supported version!
+  warnings.warn(
+/root/miniconda3/lib/python3.10/site-packages/transformers/models/auto/image_processing_auto.py:513: FutureWarning: The image_processor_class argument is deprecated and will be removed in v4.42. Please use `slow_image_processor_class`, or `fast_image_processor_class` instead
+  warnings.warn(
+正在加载大模型到 32G 显存中，请稍候...
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:00,  4.75it/s]Loading checkpoint shards:  50%|█████     | 2/4 [00:00<00:00,  5.50it/s]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:00<00:00,  6.01it/s]Loading checkpoint shards: 100%|██████████| 4/4 [00:00<00:00,  3.79it/s]Loading checkpoint shards: 100%|██████████| 4/4 [00:00<00:00,  4.29it/s]
+Traceback (most recent call last):
+  File "/root/autodl-tmp/privacy_agent_project/model_server/minicpm_api.py", line 32, in <module>
+    model = model.cuda().eval() # 放入显卡
+  File "/root/miniconda3/lib/python3.10/site-packages/transformers/modeling_utils.py", line 2875, in cuda
+    return super().cuda(*args, **kwargs)
+  File "/root/miniconda3/lib/python3.10/site-packages/torch/nn/modules/module.py", line 918, in cuda
+    return self._apply(lambda t: t.cuda(device))
+  File "/root/miniconda3/lib/python3.10/site-packages/torch/nn/modules/module.py", line 810, in _apply
+    module._apply(fn)
+  File "/root/miniconda3/lib/python3.10/site-packages/torch/nn/modules/module.py", line 810, in _apply
+    module._apply(fn)
+  File "/root/miniconda3/lib/python3.10/site-packages/torch/nn/modules/module.py", line 833, in _apply
+    param_applied = fn(param)
+  File "/root/miniconda3/lib/python3.10/site-packages/torch/nn/modules/module.py", line 918, in <lambda>
+    return self._apply(lambda t: t.cuda(device))
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 1.01 GiB. GPU 0 has a total capacty of 31.47 GiB of which 421.06 MiB is free. Process 84363 has 17.04 GiB memory in use. Including non-PyTorch memory, this process has 14.01 GiB memory in use. Of the allocated memory 13.66 GiB is allocated by PyTorch, and 110.85 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting max_split_size_mb to avoid fragmentation.  See documentation for Memory Management and PYTORCH_CUDA_ALLOC_CONF

@@ -1,3 +1,4 @@
-*.jpg
+# 忽略模型文件（最占用空间，绝对不传）
 models/
 model_server/minicpm_o/ 
+Open-AutoGLM-main/

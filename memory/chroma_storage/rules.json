@@ -1,0 +1,60 @@
+{
+  "rules": [
+    {
+      "id": "rule_privacy_001",
+      "scenario": "账号注册/登录页",
+      "target_field": "手机号",
+      "document": "禁止填写真实手机号，可使用虚拟号或填写13800000000",
+      "skill": "Visual_Obfuscation_Skill"
+    },
+    {
+      "id": "rule_privacy_002",
+      "scenario": "收货地址页",
+      "target_field": "详细地址",
+      "document": "禁止填写真实家庭住址，强制填写附近便利店或公司地址",
+      "skill": "Visual_Obfuscation_Skill"
+    },
+    {
+      "id": "rule_privacy_003",
+      "scenario": "支付页面",
+      "target_field": "银行卡号",
+      "document": "禁止填写真实银行卡号，可填写测试卡号或空白",
+      "skill": "Visual_Obfuscation_Skill"
+    },
+    {
+      "id": "rule_privacy_004",
+      "scenario": "身份认证页",
+      "target_field": "身份证号",
+      "document": "禁止填写真实身份证号，禁止上传身份证图片",
+      "skill": "Visual_Obfuscation_Skill"
+    },
+    {
+      "id": "rule_privacy_005",
+      "scenario": "社交资料页",
+      "target_field": "真实姓名",
+      "document": "禁止填写真实姓名，使用昵称或假名",
+      "skill": "Visual_Obfuscation_Skill"
+    },
+    {
+      "id": "rule_privacy_006",
+      "scenario": "邮箱注册页",
+      "target_field": "邮箱地址",
+      "document": "禁止填写真实邮箱，可使用临时邮箱或填写 test@example.com",
+      "skill": "Visual_Obfuscation_Skill"
+    },
+    {
+      "id": "rule_privacy_007",
+      "scenario": "社交分享",
+      "target_field": "位置信息",
+      "document": "禁止分享精确位置，模糊化或使用附近地标",
+      "skill": "Visual_Obfuscation_Skill"
+    },
+    {
+      "id": "rule_privacy_008",
+      "scenario": "通讯录同步",
+      "target_field": "联系人",
+      "document": "禁止上传真实联系人信息，使用空列表或虚拟联系人",
+      "skill": "Visual_Obfuscation_Skill"
+    }
+  ]
+}

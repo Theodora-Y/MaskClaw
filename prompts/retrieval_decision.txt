@@ -1,0 +1,5 @@
+请判断用户的问题是否需要外部检索知识。
+
+用户问题：{user_question}
+
+回答格式：仅输出 [Retrieve] 或 [No Retrieve]。

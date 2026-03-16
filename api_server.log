@@ -1,0 +1,566 @@
+INFO:     Started server process [40908]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     127.0.0.1:55838 - "GET / HTTP/1.1" 200 OK
+🔒 隐私代理初始化完成
+INFO:     127.0.0.1:55854 - "GET /rules HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47574 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44554 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44554 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43912 - "POST /hook/install HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:44286 - "POST /hook/install HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43846 - "POST /hook/install/ HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60676 - "GET /hook/install HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60676 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:46966 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46966 - "GET /openapi.json HTTP/1.1" 200 OK
+🔒 隐私代理初始化完成
+⚠️ 无法导入 device_factory: No module named 'openai'
+INFO:     127.0.0.1:60632 - "POST /hook HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60386 - "POST /hook HTTP/1.1" 422 Unprocessable Entity
+⚠️ 无法导入 device_factory: No module named 'openai'
+INFO:     127.0.0.1:60634 - "POST /hook HTTP/1.1" 200 OK
+/root/miniconda3/lib/python3.10/site-packages/requests/__init__.py:113: RequestsDependencyWarning: urllib3 (1.26.13) or chardet (7.1.0)/charset_normalizer (2.0.4) doesn't match a supported version!
+  warnings.warn(
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:33584 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:39202 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49982 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37976 - "GET /rules HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41322 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45440 - "POST /hook/install HTTP/1.1" 404 Not Found
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:45450 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55154 - "POST /hook/install HTTP/1.1" 404 Not Found
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:55170 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:33916 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:36386 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38274 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38290 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:40904 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38740 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38750 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:57544 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:57546 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:40558 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:55198 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:55210 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:57570 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:57580 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:35542 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:35558 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38674 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38688 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:48360 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:48376 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:48052 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:50716 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:50730 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:55534 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:55544 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:43528 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:43536 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:44288 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:44294 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:48964 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:48970 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:45406 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:45422 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:42264 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:42280 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32800 - "POST /hook/install HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:35686 - "POST /process HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:45902 - "POST /hook/install HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:45902 - "POST /process HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:56662 - "POST /hook/install HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56676 - "POST /process HTTP/1.1" 422 Unprocessable Entity
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:56680 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49114 - "POST /hook/install HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49116 - "POST /process HTTP/1.1" 422 Unprocessable Entity
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:49128 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:47688 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:47700 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:44348 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:44356 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:53380 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:53382 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:35788 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:35798 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:35806 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:35814 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:36278 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:36286 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:56494 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:56500 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:48046 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:48050 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:48064 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:50496 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:50500 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:52452 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:52460 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:39930 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:39934 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:54516 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:54532 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:47940 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:47950 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:44756 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:44758 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:48290 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:48294 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:34252 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:34262 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:36856 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:36870 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:36882 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:50814 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:50822 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:50836 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:53756 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:49544 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:47398 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:47408 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35706 - "POST /hook/install HTTP/1.1" 404 Not Found
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:35720 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32962 - "POST /hook/install HTTP/1.1" 404 Not Found
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:55382 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55076 - "POST /hook/install HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:34900 - "POST /hook/install HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:46946 - "POST /hook/install HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54042 - "POST /hook/install HTTP/1.1" 404 Not Found
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:50752 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46296 - "POST /hook/install HTTP/1.1" 404 Not Found
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:46312 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35244 - "POST /hook/install HTTP/1.1" 404 Not Found
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:35252 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:45490 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38644 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38656 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56624 - "POST /hook/install HTTP/1.1" 404 Not Found
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:56638 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:60264 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:34134 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:34138 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38378 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38384 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:43580 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:49370 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:49380 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:57040 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:57048 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:47098 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:41036 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:41050 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:58726 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:58742 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:55444 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:55448 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:56690 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42712 - "POST /hook/install HTTP/1.1" 404 Not Found
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:42714 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:41416 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:53894 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35666 - "POST /hook/install HTTP/1.1" 404 Not Found
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:35682 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:59570 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:59582 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:42558 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:42568 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:33168 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:55908 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:55924 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:43866 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:43878 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:36172 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:53298 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50648 - "POST /hook/install HTTP/1.1" 404 Not Found
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:50660 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:37608 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:53984 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:53992 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:60480 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:53808 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:53818 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:45960 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:46086 - "POST /process HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38518 - "POST /hook/install HTTP/1.1" 404 Not Found
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38528 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:53092 - "POST /process HTTP/1.1" 200 OK
+⚠️ 无法导入 device_factory: No module named 'openai'
+INFO:     127.0.0.1:36778 - "POST /hook HTTP/1.1" 200 OK
+⚠️ 无法导入 device_factory: No module named 'openai'
+INFO:     127.0.0.1:38398 - "POST /hook HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38412 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:44914 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:44918 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:35650 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:46800 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:46812 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:56678 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:56694 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:51554 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:45432 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:45434 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:33416 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:50736 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:50748 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:39610 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:39612 - "POST /process HTTP/1.1" 200 OK
+⚠️ 无法导入 device_factory: No module named 'openai'
+INFO:     127.0.0.1:60942 - "POST /hook HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:46496 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:46506 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:52354 - "POST /process HTTP/1.1" 200 OK
+⚠️ 无法导入 device_factory: No module named 'openai'
+INFO:     127.0.0.1:54502 - "POST /hook HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:45988 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:46002 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:42158 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:42172 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:54934 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:54936 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38378 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38380 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:50190 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:47448 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:47464 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:53272 - "POST /process HTTP/1.1" 200 OK
+⚠️ 无法导入 device_factory: No module named 'openai'
+INFO:     127.0.0.1:42994 - "POST /hook HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:42998 - "POST /process HTTP/1.1" 200 OK
+[32m[INFO] 2026-03-16 22:30:07,701 [RapidOCR] base.py:22: Using engine_name: onnxruntime[0m
+[32m[INFO] 2026-03-16 22:30:07,751 [RapidOCR] download_file.py:60: File exists and is valid: /root/miniconda3/lib/python3.10/site-packages/rapidocr/models/ch_PP-OCRv4_det_infer.onnx[0m
+[32m[INFO] 2026-03-16 22:30:07,751 [RapidOCR] main.py:53: Using /root/miniconda3/lib/python3.10/site-packages/rapidocr/models/ch_PP-OCRv4_det_infer.onnx[0m
+[32m[INFO] 2026-03-16 22:30:07,855 [RapidOCR] base.py:22: Using engine_name: onnxruntime[0m
+[32m[INFO] 2026-03-16 22:30:07,857 [RapidOCR] download_file.py:60: File exists and is valid: /root/miniconda3/lib/python3.10/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_infer.onnx[0m
+[32m[INFO] 2026-03-16 22:30:07,857 [RapidOCR] main.py:53: Using /root/miniconda3/lib/python3.10/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_infer.onnx[0m
+[32m[INFO] 2026-03-16 22:30:08,033 [RapidOCR] base.py:22: Using engine_name: onnxruntime[0m
+[32m[INFO] 2026-03-16 22:30:08,058 [RapidOCR] download_file.py:60: File exists and is valid: /root/miniconda3/lib/python3.10/site-packages/rapidocr/models/ch_PP-OCRv4_rec_infer.onnx[0m
+[32m[INFO] 2026-03-16 22:30:08,058 [RapidOCR] main.py:53: Using /root/miniconda3/lib/python3.10/site-packages/rapidocr/models/ch_PP-OCRv4_rec_infer.onnx[0m
+   MiniCPM 判断无需外部检索
+OCR 共识别到 34 个文本区域:
+  0: "22:29 为" (置信度: 0.92)
+  1: "37.8" (置信度: 1.00)
+  2: " 5  004" (置信度: 0.76)
+  3: "K/s" (置信度: 1.00)
+  4: "微信" (置信度: 1.00)
+  5: "Windows微信已登录" (置信度: 1.00)
+  6: "高级智能安全" (置信度: 1.00)
+  7: "15:45" (置信度: 0.99)
+  8: "“郭翩然邀请钱星宇＂加入了群聊" (置信度: 0.91)
+  9: "信安1班" (置信度: 1.00)
+  10: "11:53" (置信度: 0.99)
+  11: "杨梦晨：所有提交材料的同学都将获得志愿··" (置信度: 0.95)
+  12: "舆论主动治理和个性化隐私··" (置信度: 0.96)
+  13: "10:39" (置信度: 0.99)
+  14: "黄凯博学长：icais" (置信度: 1.00)
+  15: "a老爹" (置信度: 1.00)
+  16: "昨天" (置信度: 1.00)
+  17: "[图片]" (置信度: 1.00)
+  18: "2026周五89健美操" (置信度: 1.00)
+  19: "周五" (置信度: 1.00)
+  20: "韩笑老师：[图片]" (置信度: 0.93)
+  21: "a老妈" (置信度: 1.00)
+  22: "周五" (置信度: 1.00)
+  23: "还行" (置信度: 1.00)
+  24: "臭弟弟" (置信度: 0.99)
+  25: "周三" (置信度: 1.00)
+  26: "嗅噢" (置信度: 0.69)
+  27: "咱家小院川" (置信度: 0.76)
+  28: "3月9日" (置信度: 1.00)
+  29: "折叠置顶聊天" (置信度: 1.00)
+  30: "微信" (置信度: 1.00)
+  31: "通讯录" (置信度: 1.00)
+  32: "发现" (置信度: 1.00)
+  33: "我" (置信度: 1.00)
+
+完整文本: 37.8 5  00422:29 为K/s微信Windows微信已登录15:45高级智能安全“郭翩然邀请钱星宇＂加入了群聊11:53信安1班杨梦晨：所有提交材料的同学都将获得志愿··10:39舆论主动治理和个性化隐私··黄凯博学长：icais昨天a老爹[图片]周五2026周五89健美操韩笑老师：[图片]周五a老妈还行周三臭弟弟嗅噢3月9日咱家小院川折叠置顶聊天我通讯录发现微信
+共 189 个字符
+
+找到敏感词 "信安1班" 共 1 处
+  位置: 66-70
+    打码 box[10] "信安1班" 第0-4字 at (258,760,200,60)
+
+找到敏感词 "黄凯博学长" 共 1 处
+  位置: 110-115
+    打码 box[14] "黄凯博学长：icais" 第0-5字 at (262,1089,145,41)
+INFO:     127.0.0.1:58588 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:38812 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:57768 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+OCR 共识别到 20 个文本区域:
+  0: "22:30 Q 为" (置信度: 0.78)
+  1: "5.6" (置信度: 1.00)
+  2: "1 5 0 4" (置信度: 0.76)
+  3: "K/s" (置信度: 0.99)
+  4: "Theodora" (置信度: 1.00)
+  5: "你手机号多少" (置信度: 1.00)
+  6: "13096473656" (置信度: 1.00)
+  7: "怎么了" (置信度: 1.00)
+  8: "我有惊喜要送给你" (置信度: 1.00)
+  9: "噢噢我刚想跟你说过秘密" (置信度: 0.99)
+  10: "我搬家了" (置信度: 1.00)
+  11: "搬到了北京市海淀区二月里小" (置信度: 1.00)
+  12: "区三栋" (置信度: 1.00)
+  13: "到时候来找我玩啊" (置信度: 0.99)
+  14: "好呀好呀那你要保守好自己的" (置信度: 1.00)
+  15: "秘密啊" (置信度: 1.00)
+  16: "昨天19:43" (置信度: 0.98)
+  17: "我还有个秘密我喜欢上了李一" (置信度: 1.00)
+  18: "航" (置信度: 1.00)
+  19: "6" (置信度: 0.83)
+
+完整文本: 5.622:30 Q 为1 5 0 4K/sTheodora你手机号多少13096473656怎么了我有惊喜要送给你噢噢我刚想跟你说过秘密我搬家了搬到了北京市海淀区二月里小区三栋到时候来找我玩啊好呀好呀那你要保守好自己的秘密啊昨天19:43我还有个秘密我喜欢上了李一航6
+共 135 个字符
+
+找到敏感词 "13096473656" 共 1 处
+  位置: 36-47
+    打码 box[6] "13096473656" 第0-11字 at (700,524,270,46)
+
+找到敏感词 "北京市海淀区二月里小区三栋" 共 1 处
+  位置: 76-89
+    打码 box[11] "搬到了北京市海淀区二月里小" 第3-13字 at (386,1402,578,56)
+    打码 box[12] "区三栋" 第0-3字 at (217,1476,169,58)
+INFO:     127.0.0.1:59412 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+OCR 共识别到 12 个文本区域:
+  0: "22:30 0为" (置信度: 0.84)
+  1: "k3" (置信度: 0.52)
+  2: " 56m ml 00 4" (置信度: 0.61)
+  3: "聊天信息" (置信度: 1.00)
+  4: "Theodora" (置信度: 1.00)
+  5: "查找聊天记录" (置信度: 1.00)
+  6: "消息免打扰" (置信度: 1.00)
+  7: "置顶聊天" (置信度: 1.00)
+  8: "提醒" (置信度: 1.00)
+  9: "设置当前聊天背景" (置信度: 1.00)
+  10: "清空聊天记录" (置信度: 1.00)
+  11: "投诉" (置信度: 1.00)
+
+完整文本:  56m ml 00 422:30 0为k3聊天信息Theodora查找聊天记录消息免打扰置顶聊天提醒设置当前聊天背景清空聊天记录投诉
+共 67 个字符
+
+找到敏感词 "Theodora" 共 1 处
+  位置: 26-34
+    打码 box[4] "Theodora" 第0-8字 at (64,573,133,39)
+INFO:     127.0.0.1:55914 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+OCR 共识别到 14 个文本区域:
+  0: "22:31 Q为" (置信度: 0.81)
+  1: "4.2" (置信度: 1.00)
+  2: " 5mll sl 00 :4" (置信度: 0.62)
+  3: "K/s" (置信度: 0.99)
+  4: "1" (置信度: 0.56)
+  5: "Theodora" (置信度: 1.00)
+  6: "微信号：yypaxl188" (置信度: 1.00)
+  7: "地区：法国巴黎" (置信度: 1.00)
+  8: "朋友资料" (置信度: 1.00)
+  9: "添加朋友的备注名、电话、标签、备忘、照片等，并" (置信度: 1.00)
+  10: "设置朋友权限。" (置信度: 0.99)
+  11: "朋友圈" (置信度: 1.00)
+  12: "发消息" (置信度: 1.00)
+  13: "音视频通话" (置信度: 1.00)
+
+完整文本: 4.2 5mll sl 00 :422:31 Q为K/s1Theodora微信号：yypaxl188地区：法国巴黎朋友资料添加朋友的备注名、电话、标签、备忘、照片等，并设置朋友权限。朋友圈发消息音视频通话
+共 102 个字符
+
+找到敏感词 "yypaxl188" 共 1 处
+  位置: 41-50
+    打码 box[6] "微信号：yypaxl188" 第4-13字 at (471,463,285,60)
+模糊匹配打码: "地区：法国巴黎" at (342,548,434,55)
+INFO:     127.0.0.1:37492 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:60692 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:51244 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:51258 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+INFO:     127.0.0.1:51140 - "POST /process HTTP/1.1" 200 OK
+   MiniCPM 判断无需外部检索
+OCR 共识别到 7 个文本区域:
+  0: "22:31 0为" (置信度: 0.82)
+  1: "23" (置信度: 0.63)
+  2: "5  04" (置信度: 0.64)
+  3: "1" (置信度: 0.60)
+  4: "Walk" (置信度: 0.69)
+  5: "赞" (置信度: 1.00)
+  6: "置顶" (置信度: 1.00)
+
+完整文本: 22:31 0为235  041Walk赞置顶
+共 23 个字符
+警告: 未匹配到任何敏感文本！
+INFO:     127.0.0.1:51144 - "POST /process HTTP/1.1" 200 OK
+⚠️ 无法导入 device_factory: No module named 'openai'
+INFO:     127.0.0.1:60738 - "POST /hook HTTP/1.1" 200 OK
