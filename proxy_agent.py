@@ -75,6 +75,8 @@ class SafeScreenshot:
         self.base64_data = base64_data
         self.width = width
         self.height = height
+        # 隐私元数据（供 Open-AutoGLM 读取）
+        self.privacy_metadata: Optional[Dict[str, Any]] = None
 
 
 class ProcessResult:
@@ -120,8 +122,22 @@ class PromptLoader:
     
     def format(self, prompt_name: str, **kwargs) -> str:
         """加载并格式化 Prompt"""
+        import re
+        # 每次强制重新加载，避免缓存问题
+        self._cache.pop(prompt_name, None)
         template = self.load(prompt_name)
-        return template.format(**kwargs)
+        
+        # 使用正则只替换单个花括号包围的占位符 {key}
+        def replace_placeholder(match):
+            key = match.group(1)
+            if key in kwargs:
+                return str(kwargs[key])
+            return match.group(0)  # 保持原样
+        
+        # 替换 {key} 格式的占位符（不匹配 {{...}} 或 {{{key}}}）
+        template = re.sub(r'\{(\w+)\}', replace_placeholder, template)
+        
+        return template
 
 
 # ============== ChromaDB 存储 ==============
@@ -134,6 +150,8 @@ class ChromaMemory:
         self._client = None
         self._collection = None
         self._rules_file = self.storage_dir / "rules.json"
+        self._last_rules_mtime: float = 0  # 记录 rules.json 的修改时间
+        self._loaded_rule_ids: set = set()  # 记录已加载的规则 ID
         self._initialize()
     
     def _initialize(self):
@@ -160,11 +178,27 @@ class ChromaMemory:
                 name=self.collection_name,
                 metadata={"description": "隐私保护规则库"}
             )
-            # 从 rules.json 加载默认规则
-            self._load_rules_from_file()
+        
+        # 初始化时加载规则
+        self._check_and_reload_rules()
+    
+    def _check_and_reload_rules(self):
+        """检查并热更新 rules.json"""
+        if not self._rules_file.exists():
+            return
+        
+        try:
+            current_mtime = self._rules_file.stat().st_mtime
+            if current_mtime > self._last_rules_mtime:
+                # 文件被修改，重新加载
+                print(f"\n🔄 检测到 rules.json 变化，正在热更新...")
+                self._load_rules_from_file()
+                self._last_rules_mtime = current_mtime
+        except Exception as e:
+            pass
     
     def _load_rules_from_file(self):
-        """从 rules.json 加载默认规则"""
+        """从 rules.json 加载规则（支持热更新）"""
         if not self._rules_file.exists():
             print(f"⚠️ 规则文件不存在: {self._rules_file}")
             return
@@ -174,10 +208,38 @@ class ChromaMemory:
                 data = json.load(f)
             
             rules = data.get("rules", [])
-            for rule in rules:
-                self.add_rule(rule)
             
-            print(f"✅ 已从 rules.json 加载 {len(rules)} 条规则")
+            # 获取当前 ChromaDB 中的所有规则 ID
+            try:
+                existing_data = self._collection.get(include=["ids"])
+                existing_ids = set(existing_data.get("ids", []) or [])
+            except:
+                existing_ids = set()
+            
+            # 记录当前文件的规则 ID
+            current_rule_ids = set()
+            
+            for rule in rules:
+                rule_id = str(rule.get("id") or f"rule_{os.urandom(6).hex()}")
+                current_rule_ids.add(rule_id)
+                
+                if rule_id not in self._loaded_rule_ids:
+                    # 新规则，添加到 ChromaDB
+                    self.add_rule(rule)
+                    self._loaded_rule_ids.add(rule_id)
+            
+            # 找出被删除的规则（存在于 ChromaDB 但不在 rules.json 中）
+            deleted_ids = existing_ids - current_rule_ids
+            if deleted_ids:
+                try:
+                    self._collection.delete(ids=list(deleted_ids))
+                    print(f"   🗑️ 已删除 {len(deleted_ids)} 条失效规则")
+                    self._loaded_rule_ids -= deleted_ids
+                except Exception as e:
+                    print(f"   ⚠️ 删除失效规则失败: {e}")
+            
+            print(f"   ✅ 已同步 {len(rules)} 条规则（新增: {len(current_rule_ids - existing_ids)}, 删除: {len(deleted_ids)}）")
+            
         except Exception as e:
             print(f"⚠️ 加载规则失败: {e}")
     
@@ -188,6 +250,10 @@ class ChromaMemory:
         
         try:
             rule_id = str(rule.get("id") or f"rule_{os.urandom(6).hex()}")
+            
+            # 如果是新增的规则，记录 ID
+            self._loaded_rule_ids.add(rule_id)
+            
             scenario = str(rule.get("scenario", ""))
             target_field = str(rule.get("target_field", ""))
             document = str(rule.get("document", ""))
@@ -204,6 +270,9 @@ class ChromaMemory:
     
     def retrieve(self, query: str, top_k: int = 3) -> List[Dict[str, Any]]:
         """检索相关规则"""
+        # 每次检索前检查是否需要热更新
+        self._check_and_reload_rules()
+        
         if self._collection is None:
             return []
         
@@ -229,6 +298,9 @@ class ChromaMemory:
             return []
 
     def list_rules(self, limit: int = 200) -> List[Dict[str, Any]]:
+        # 每次列出规则前检查是否需要热更新
+        self._check_and_reload_rules()
+        
         if self._collection is None:
             return []
         try:
@@ -294,6 +366,35 @@ class MiniCPMClient:
         # 支持运行时配置最大分辨率
         self.max_width = max_width or self.MAX_WIDTH
         self.max_height = max_height or self.MAX_HEIGHT
+
+    def extract_task_entities(self, user_command: str) -> List[str]:
+        """从用户指令中提取任务关键实体（人名、关键词等）"""
+        import re
+        
+        entities = []
+        
+        # 1. 提取中文名字（2-4个汉字）
+        chinese_names = re.findall(r'[\u4e00-\u9fa5]{2,4}', user_command)
+        entities.extend(chinese_names)
+        
+        # 2. 提取英文名字（连续英文字母，首字母大写）
+        english_names = re.findall(r'[A-Z][a-z]+', user_command)
+        entities.extend(english_names)
+        
+        # 3. 提取带引号的关键词
+        quoted = re.findall(r'["\']([^"\']+)["\']', user_command)
+        entities.extend(quoted)
+        
+        # 4. 去除常见指令词
+        stop_words = {'打开', '关闭', '给', '发', '看', '点击', '发送', '删除', '添加', '搜索', 
+                     '找到', '进入', '返回', '提交', '填写', '登录', '注册', '点赞', '评论',
+                     '转发', '分享', '关注', '取消', '第一个', '第二条', '最后', '请', '帮我'}
+        entities = [e for e in entities if e not in stop_words and len(e) > 1]
+        
+        # 去重
+        entities = list(set(entities))
+        
+        return entities if entities else ["无明确实体"]
 
     def _preprocess_image(self, image_path: str) -> str:
         """
@@ -375,11 +476,12 @@ class MiniCPMClient:
         except Exception as e:
             return {"success": False, "error": str(e)}
     
-    def decide_retrieval(self, user_question: str, prompt_loader: PromptLoader) -> bool:
+    def decide_retrieval(self, scene_description: str, user_task: str, prompt_loader: PromptLoader) -> bool:
         """Self-RAG: 判断是否需要检索"""
         prompt = prompt_loader.format(
             "retrieval_decision",
-            user_question=user_question
+            scene_description=scene_description,
+            user_task=user_task
         )
         
         result = self.chat(prompt)
@@ -388,7 +490,7 @@ class MiniCPMClient:
             return "[Retrieve]" in response
         return False
     
-    def assess_relevance(self, user_question: str, retrieved_docs: List[str], 
+    def assess_relevance(self, scene_description: str, retrieved_docs: List[str], 
                         prompt_loader: PromptLoader) -> List[Tuple[str, bool]]:
         """Self-RAG: 评估检索结果相关性"""
         if not retrieved_docs:
@@ -400,7 +502,7 @@ class MiniCPMClient:
         prompt = prompt_loader.format(
             "relevance_assessment",
             retrieved_content=content,
-            user_question=user_question
+            scene_description=scene_description
         )
         
         result = self.chat(prompt)
@@ -418,31 +520,22 @@ class MiniCPMClient:
         
         return relevance_results
     
-    def analyze_privacy(self, image_path: str, user_command: str, 
-                       matched_rules: str) -> Dict[str, Any]:
+    def analyze_privacy(self, image_path: str, user_command: str, prompt_loader: PromptLoader = None) -> Dict[str, Any]:
         """分析图片中的隐私信息"""
-        prompt = f"""你是一个隐私安全代理。请分析这张截图：
-
-用户指令: {user_command}
-
-本地 RAG 规则:
-{matched_rules}
-
-请分析：
-1. 这张图片中包含哪些敏感/隐私信息？（如：姓名、手机号、地址、银行卡、身份证等）
-2. 每个敏感信息的具体文字内容是什么？
-3. 需要对这些信息进行打码处理吗？
-
-输出格式（JSON）：
-{{
-  "sensitive_info": [
-    {{"type": "手机号", "text": "13812345678", "location": "截图顶部输入框"}},
-    {{"type": "地址", "text": "北京市朝阳区xx小区", "location": "收货地址栏"}}
-  ],
-  "need_mask": true/false,
-  "reasoning": "分析理由"
-}}
-"""
+        # 使用外部 Prompt 文件
+        if prompt_loader is None:
+            from pathlib import Path
+            prompt_loader = PromptLoader()
+        
+        # 提取任务关键实体
+        task_entities = self.extract_task_entities(user_command)
+        task_entities_str = "、".join(task_entities)
+        
+        prompt = prompt_loader.format(
+            "privacy_analysis",
+            user_command=user_command,
+            task_entities=task_entities_str
+        )
         
         result = self.chat(prompt, image_path)
         
@@ -453,10 +546,12 @@ class MiniCPMClient:
                 json_match = re.search(r'\{[\s\S]*\}', response_text)
                 if json_match:
                     analysis = json.loads(json_match.group())
+                    # 保存任务实体，供后续处理使用
+                    analysis["_task_entities"] = task_entities
                     return {"success": True, "analysis": analysis}
-                return {"success": True, "analysis": {"raw_response": response_text}}
+                return {"success": True, "analysis": {"raw_response": response_text, "_task_entities": task_entities}}
             except (json.JSONDecodeError, re.error):
-                return {"success": True, "analysis": {"raw_response": result["response"]}}
+                return {"success": True, "analysis": {"raw_response": result["response"], "_task_entities": task_entities}}
         return result
 
 
@@ -646,6 +741,14 @@ class PrivacyProxyAgent:
             )
             analysis = getattr(screenshot, "analysis", {}) if screenshot else {}
             masked_count = int(getattr(screenshot, "masked_count", 0) or 0) if screenshot else 0
+            
+            # 将隐私元数据写入 screenshot 对象，供 Open-AutoGLM 读取
+            if screenshot:
+                screenshot.privacy_metadata = {
+                    "matched_rules": self.last_matched_rules,
+                    "masked_count": masked_count,
+                }
+            
             return ProcessResult(
                 screenshot=screenshot,
                 masked_image_bytes=masked_bytes,
@@ -667,27 +770,82 @@ class PrivacyProxyAgent:
         """
         self.last_user_command = user_command
         
-        matched_rules = self._selfrag_retrieve(user_command)
+        # 基于截图内容进行规则检索
+        matched_rules = self._selfrag_retrieve(image_path, user_command)
         self.last_matched_rules = matched_rules
         formatted_rules = self._format_rules(matched_rules)
 
         privacy_analysis = self.minicpm_client.analyze_privacy(
             image_path=image_path,
             user_command=user_command,
-            matched_rules=formatted_rules
+            prompt_loader=self.prompt_loader
         )
         
         sensitive_texts: List[str] = []
         need_mask = False
         analysis: Dict[str, Any] = {}
+        task_target_entities: List[str] = []  # 任务目标实体
         
         if privacy_analysis.get("success"):
             analysis = privacy_analysis.get("analysis", {}) or {}
             if isinstance(analysis, dict):
-                for info in analysis.get("sensitive_info", []) or []:
-                    if isinstance(info, dict) and info.get("text"):
-                        sensitive_texts.append(str(info["text"]))
-                need_mask = bool(analysis.get("need_mask", bool(sensitive_texts)))
+                # 调试：打印完整的 MiniCPM 分析结果
+                print(f"\n🔍 MiniCPM 隐私分析结果:")
+                print(f"   task_target_entities: {analysis.get('task_target_entities', [])}")
+                print(f"   privacy_concerns: {analysis.get('privacy_concerns', [])}")
+                print(f"   mask_plan: {analysis.get('mask_plan', [])}")
+                print(f"   need_mask: {analysis.get('need_mask', False)}")
+                
+                # 保存任务目标实体
+                task_target_entities = analysis.get("task_target_entities", [])
+                
+                # 新格式：使用 mask_plan（支持 action 字段）
+                mask_plan = analysis.get("mask_plan", [])
+                if mask_plan:
+                    for item in mask_plan:
+                        if isinstance(item, dict):
+                            action = item.get("action", "MASK")
+                            if action == "MASK":
+                                # 需要打码的项
+                                if item.get("text"):
+                                    sensitive_texts.append(str(item["text"]))
+                            elif action == "KEEP_AS_TASK_TARGET":
+                                # 任务目标，豁免打码
+                                print(f"   🔑 豁免打码（任务目标）: {item.get('text')}")
+                    need_mask = bool(sensitive_texts)
+                else:
+                    # 兼容旧格式：使用 sensitive_info
+                    for info in analysis.get("sensitive_info", []) or []:
+                        if isinstance(info, dict) and info.get("text"):
+                            sensitive_texts.append(str(info["text"]))
+                    need_mask = bool(analysis.get("need_mask", bool(sensitive_texts)))
+            
+            # 后处理：自动补充遗漏的常见隐私类型（兜底机制）
+            import re
+            # 读取原始截图进行 OCR
+            ocr_texts = self._get_ocr_texts(image_path)
+            all_text = " ".join(ocr_texts)
+            
+            # 自动识别手机号（11位数字）
+            phone_pattern = re.compile(r'\b1[3-9]\d{9}\b')
+            found_phones = phone_pattern.findall(all_text)
+            
+            # 检查是否已识别，未识别的自动补充
+            existing_mask_texts = [s.lower() for s in sensitive_texts]
+            for phone in found_phones:
+                if phone not in existing_mask_texts and phone not in task_target_entities:
+                    sensitive_texts.append(phone)
+                    print(f"   📱 自动补充识别手机号: {phone}")
+                    need_mask = True
+            
+            # 自动识别身份证号（18位）
+            id_pattern = re.compile(r'\b[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]\b')
+            found_ids = id_pattern.findall(all_text)
+            for id_num in found_ids:
+                if id_num not in existing_mask_texts:
+                    sensitive_texts.append(id_num)
+                    print(f"   🪪 自动补充识别身份证号: {id_num[:6]}****{id_num[-4:]}")
+                    need_mask = True
         
         masked_image_path = None
         masked_count = 0
@@ -712,45 +870,132 @@ class PrivacyProxyAgent:
         screenshot_obj.masked_count = masked_count
         return screenshot_obj
     
-    def _selfrag_retrieve(self, user_command: str) -> List[Dict[str, Any]]:
-        """Self-RAG 检索流程"""
-        # 1. 判断是否需要检索
+    def _selfrag_retrieve(self, image_path: str, user_command: str) -> List[Dict[str, Any]]:
+        """
+        Self-RAG 检索流程（基于截图内容）
+        1. 使用 MiniCPM 分析截图，生成场景描述
+        2. 基于场景描述判断是否需要检索
+        3. ChromaDB 检索
+        4. 评估相关性
+        """
+        print("\n" + "=" * 60)
+        print("🔍 隐私规则检索流程")
+        print("=" * 60)
+        
+        # Step 1: 使用 MiniCPM 分析截图内容，生成场景描述作为检索 query
+        print("\n[Step 1] 📷 分析截图内容...")
+        scene_description = self._analyze_scene_description(image_path, user_command)
+        
+        if not scene_description:
+            print("   ⚠️ 无法生成场景描述，跳过检索")
+            print("=" * 60 + "\n")
+            return []
+        
+        print(f"   📝 场景描述: {scene_description}")
+        
+        # Step 2: 判断是否需要检索
+        print("\n[Step 2] 🤖 判断是否需要检索...")
         need_retrieve = self.minicpm_client.decide_retrieval(
-            user_command, 
+            scene_description, 
+            user_command,
             self.prompt_loader
         )
         
         if not need_retrieve:
-            print("   MiniCPM 判断无需外部检索")
+            print("   ℹ️  MiniCPM 判断当前场景无需外部检索")
+            print("=" * 60 + "\n")
             return []
         
-        # 2. ChromaDB 检索
-        print("   正在检索 ChromaDB...")
-        raw_results = self.chroma_memory.retrieve(user_command)
+        # Step 3: ChromaDB 检索（使用场景描述作为 query）
+        print("\n[Step 3] 🔎 ChromaDB 检索...")
+        print(f"   Query: {scene_description[:80]}...")
+        raw_results = self.chroma_memory.retrieve(scene_description)
         
         if not raw_results:
+            print("   ℹ️  ChromaDB 无匹配结果")
+            print("=" * 60 + "\n")
             return []
         
-        # 3. 评估相关性
+        print(f"   📄 检索到 {len(raw_results)} 条候选规则")
+        
+        # Step 4: 评估相关性
+        print("\n[Step 4] 📊 评估规则相关性...")
         retrieved_docs = [r["document"] for r in raw_results]
         relevance_results = self.minicpm_client.assess_relevance(
-            user_command, 
+            scene_description, 
             retrieved_docs,
             self.prompt_loader
         )
         
-        # 4. 过滤相关结果
+        # 打印每条规则的相关性评估结果
+        for i, (doc, is_relevant) in enumerate(relevance_results):
+            status = "✅ 相关" if is_relevant else "❌ 不相关"
+            # 截取规则描述
+            doc_preview = doc[:60] + "..." if len(doc) > 60 else doc
+            print(f"   {i+1}. {status}: {doc_preview}")
+        
+        # Step 5: 过滤相关结果
         matched = []
         for (doc, is_relevant) in relevance_results:
             if is_relevant:
                 matched.append({"document": doc})
         
+        print(f"\n[Result] ✅ 匹配到 {len(matched)} 条相关规则")
+        print("=" * 60 + "\n")
+        
         return matched
+    
+    def _analyze_scene_description(self, image_path: str, user_command: str) -> str:
+        """使用 MiniCPM 分析截图，生成场景描述（用于规则检索）"""
+        prompt = f"""分析这张截图，描述当前界面场景。
+
+用户任务: {user_command}
+
+请描述：
+1. 当前是什么应用/页面（如：微信聊天页、淘宝商品页、登录页等）
+2. 页面包含哪些关键元素（如：搜索框、输入框、按钮列表等）
+3. 是否有明显的隐私敏感元素（如：手机号输入框、身份证号、地址栏等）
+
+请用简洁的中文描述场景，20-50字即可。"""
+        
+        result = self.minicpm_client.chat(prompt, image_path)
+        
+        if result.get("success"):
+            return result.get("response", "").strip()
+        return ""
     
     def _format_rules(self, rules: List[Dict[str, Any]]) -> str:
         """格式化规则为文本"""
         if not rules:
             return "无特定规则匹配"
+        
+        formatted = []
+        for i, rule in enumerate(rules):
+            doc = rule.get("document", "")
+            formatted.append(f"{i+1}. {doc}")
+        return "\n".join(formatted)
+    
+    def _get_ocr_texts(self, image_path: str) -> List[str]:
+        """使用 RapidOCR 提取图片中的所有文本"""
+        import cv2
+        from rapidocr import RapidOCR
+        
+        ocr_engine = RapidOCR()
+        image = cv2.imread(image_path)
+        
+        if image is None:
+            return []
+        
+        result = ocr_engine(image)
+        if result is None:
+            return []
+        
+        # RapidOCR 返回 RapidOCROutput 对象，有 txts, boxes, scores 属性
+        # txts 是 tuple 类型
+        texts = getattr(result, 'txts', None)
+        if texts:
+            return [str(t) for t in texts if t]
+        return []
         
         text = ""
         for i, rule in enumerate(rules, 1):

@@ -1,10 +1,7 @@
 """Main PhoneAgent class for orchestrating phone automation."""
 
 import json
-import os
 import traceback
-import base64
-import requests
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -14,51 +11,6 @@ from phone_agent.config import get_messages, get_system_prompt
 from phone_agent.device_factory import get_device_factory
 from phone_agent.model import ModelClient, ModelConfig
 from phone_agent.model.client import MessageBuilder
-
-
-# ============== 隐私代理配置 ==============
-PRIVACY_PROXY_ENABLED = os.getenv("PHONE_AGENT_PRIVACY_PROXY", "false").lower() == "true"
-PRIVACY_SERVER_URL = os.getenv("PHONE_AGENT_PRIVACY_SERVER_URL", "http://127.0.0.1:8001")
-PRIVACY_COMMAND = os.getenv("PHONE_AGENT_PRIVACY_COMMAND", "分析当前页面隐私并对敏感信息进行打码")
-PRIVACY_TIMEOUT = int(os.getenv("PHONE_AGENT_PRIVACY_TIMEOUT", "30"))
-
-
-def call_privacy_proxy(image_base64: str, command: str) -> str:
-    """
-    调用隐私代理 API 对图片进行脱敏处理
-    返回脱敏后的 base64 图片数据
-    """
-    if not PRIVACY_PROXY_ENABLED:
-        return image_base64
-
-    try:
-        # 解码原图
-        image_bytes = base64.b64decode(image_base64)
-
-        # 调用隐私代理 API，使用 return_base64=true 简化响应处理
-        files = {"image": ("screenshot.png", image_bytes, "image/png")}
-        data = {"command": command, "return_base64": "true"}
-
-        response = requests.post(
-            f"{PRIVACY_SERVER_URL}/process",
-            files=files,
-            data=data,
-            timeout=PRIVACY_TIMEOUT
-        )
-
-        if response.status_code == 200:
-            result = response.json()
-            if result.get("success") and result.get("image_base64"):
-                return result["image_base64"]
-            # 如果没有 image_base64，尝试从响应中解析
-            if "image_base64" in result:
-                return result.get("image_base64", image_base64)
-
-    except Exception as e:
-        print(f"⚠️ 隐私代理调用失败: {e}")
-
-    # 失败时返回原图
-    return image_base64
 
 
 @dataclass
@@ -190,15 +142,6 @@ class PhoneAgent:
         # Capture current screen state
         device_factory = get_device_factory()
         screenshot = device_factory.get_screenshot(self.agent_config.device_id)
-
-        # 调用隐私代理进行脱敏处理
-        if PRIVACY_PROXY_ENABLED and screenshot and screenshot.base64_data:
-            masked_base64 = call_privacy_proxy(
-                screenshot.base64_data,
-                f"{user_prompt or ''} {PRIVACY_COMMAND}"
-            )
-            screenshot.base64_data = masked_base64
-
         current_app = device_factory.get_current_app(self.agent_config.device_id)
 
         # Build messages

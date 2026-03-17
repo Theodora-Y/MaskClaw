@@ -11,7 +11,7 @@
       "id": "rule_privacy_002",
       "scenario": "收货地址页",
       "target_field": "详细地址",
-      "document": "禁止填写真实家庭住址，强制填写附近便利店或公司地址",
+      "document": "上学期间填写学校地址，放假期间填写家里地址",
       "skill": "Visual_Obfuscation_Skill"
     },
     {
