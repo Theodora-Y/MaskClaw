@@ -368,28 +368,49 @@ class MiniCPMClient:
         self.max_height = max_height or self.MAX_HEIGHT
 
     def extract_task_entities(self, user_command: str) -> List[str]:
-        """从用户指令中提取任务关键实体（人名、关键词等）"""
+        """从用户指令中提取任务关键实体（人名、账号、联系方式等）"""
         import re
         
         entities = []
         
-        # 1. 提取中文名字（2-4个汉字）
-        chinese_names = re.findall(r'[\u4e00-\u9fa5]{2,4}', user_command)
-        entities.extend(chinese_names)
+        # 1. 提取带"给/向/对 xxx"模式的人名
+        # "给张三发消息" -> 张三
+        pattern1 = re.findall(r'给([\u4e00-\u9fa5]{2,4})发', user_command)
+        pattern2 = re.findall(r'向([\u4e00-\u9fa5]{2,4})说', user_command)
+        pattern3 = re.findall(r'对([\u4e00-\u9fa5]{2,4})说', user_command)
+        entities.extend(pattern1 + pattern2 + pattern3)
         
-        # 2. 提取英文名字（连续英文字母，首字母大写）
-        english_names = re.findall(r'[A-Z][a-z]+', user_command)
-        entities.extend(english_names)
+        # 2. 提取"和xxx的"模式
+        # "查看和李四的聊天记录" -> 李四
+        pattern4 = re.findall(r'和([\u4e00-\u9fa5]{2,4})的', user_command)
+        entities.extend(pattern4)
         
-        # 3. 提取带引号的关键词
-        quoted = re.findall(r'["\']([^"\']+)["\']', user_command)
+        # 3. 提取"@xxx"或"at xxx"模式
+        at_names = re.findall(r'@(\w+)', user_command)
+        entities.extend(at_names)
+        
+        # 4. 提取带引号的关键词（更精准）
+        quoted = re.findall(r'["\']([^"\']{2,20})["\']', user_command)
         entities.extend(quoted)
         
-        # 4. 去除常见指令词
-        stop_words = {'打开', '关闭', '给', '发', '看', '点击', '发送', '删除', '添加', '搜索', 
-                     '找到', '进入', '返回', '提交', '填写', '登录', '注册', '点赞', '评论',
-                     '转发', '分享', '关注', '取消', '第一个', '第二条', '最后', '请', '帮我'}
-        entities = [e for e in entities if e not in stop_words and len(e) > 1]
+        # 5. 提取微信号/手机号模式
+        wechat_ids = re.findall(r'微信[号ID]?[:：]?(\w{6,20})', user_command)
+        phone_nums = re.findall(r'1[3-9]\d{9}', user_command)
+        entities.extend(wechat_ids + phone_nums)
+        
+        # 6. 常见指令词（需要过滤掉）
+        stop_words = {
+            '打开', '关闭', '给', '发', '看', '点击', '发送', '删除', '添加', '搜索',
+            '找到', '进入', '返回', '提交', '填写', '登录', '注册', '点赞', '评论',
+            '转发', '分享', '关注', '取消', '第一个', '第二条', '最后', '请', '帮我',
+            '一下', '这个', '那个', '什么', '怎么', '如何', '帮忙', '告诉', '查询',
+            '查看', '浏览', '聊天', '记录', '消息', '信息', '内容', '图片', '照片',
+            '视频', '文件', '文档', '通讯录', '联系人', '电话', '地址', '名字', '姓名',
+            '红包', '转账', '付款', '快递', '订单', '商品', '看看'
+        }
+        
+        # 过滤
+        entities = [e for e in entities if e not in stop_words and len(e) >= 2]
         
         # 去重
         entities = list(set(entities))
@@ -726,14 +747,14 @@ class PrivacyProxyAgent:
             return rules[:limit]
         return self.chroma_memory.list_rules(limit=limit)
 
-    def process_image_bytes(self, image_bytes: bytes, filename: str, user_command: str) -> ProcessResult:
+    def process_image_bytes(self, image_bytes: bytes, filename: str, user_command: str, user_id: str = None) -> ProcessResult:
         """
         供 HTTP 层调用：bytes → 完整调度 → bytes + JSON
         """
         tfm = TempFileManager()
         try:
             input_path = tfm.write_bytes(image_bytes, safe_suffix(filename))
-            screenshot = self.process_screenshot(str(input_path), user_command)
+            screenshot = self.process_screenshot(str(input_path), user_command, user_id)
             masked_bytes = (
                 base64.b64decode(screenshot.base64_data)
                 if screenshot and getattr(screenshot, "base64_data", None)
@@ -760,13 +781,13 @@ class PrivacyProxyAgent:
         finally:
             tfm.cleanup()
     
-    def process_screenshot(self, image_path: str, user_command: str) -> SafeScreenshot:
+    def process_screenshot(self, image_path: str, user_command: str, user_id: str = None) -> SafeScreenshot:
         """
         处理截图的核心流程：
         1. Self-RAG 检索规则
         2. MiniCPM 分析隐私信息
         3. Smart Masker 打码
-        4. 返回处理后的截图
+        4. 记录行为日志
         """
         self.last_user_command = user_command
         
@@ -868,8 +889,72 @@ class PrivacyProxyAgent:
         # 挂载调试/返回信息（不影响 Hook 兼容）
         screenshot_obj.analysis = analysis
         screenshot_obj.masked_count = masked_count
+
+        # 记录行为日志
+        self._log_behavior(
+            user_id=user_id,
+            matched_rules=matched_rules,
+            analysis=analysis,
+            need_mask=need_mask,
+            sensitive_texts=sensitive_texts,
+            masked_count=masked_count,
+        )
+
         return screenshot_obj
-    
+
+    def _log_behavior(
+        self,
+        user_id: str,
+        matched_rules: List[Dict[str, Any]],
+        analysis: Dict[str, Any],
+        need_mask: bool,
+        sensitive_texts: List[str],
+        masked_count: int,
+    ) -> None:
+        """记录行为日志到 memory/logs/{user_id}/"""
+        if not user_id:
+            return
+
+        try:
+            from skills.behavior_monitor import log_event
+
+            # 从 analysis 中提取 app_context
+            app_context = analysis.get("app_context", "unknown")
+            task_target_entities = analysis.get("task_target_entities", [])
+            mask_plan = analysis.get("mask_plan", [])
+
+            # 根据是否有匹配的规则和打码需求决定 resolution
+            if matched_rules and need_mask:
+                resolution = "mask"
+                level = 1
+            elif matched_rules:
+                resolution = "allow"
+                level = 1
+            else:
+                # 无匹配规则，不处理
+                return
+
+            # 为每个敏感字段记录一条日志
+            pii_types = []
+            for item in mask_plan:
+                if isinstance(item, dict):
+                    pii_type = item.get("pii_type", "unknown")
+                    if pii_type not in pii_types:
+                        pii_types.append(pii_type)
+
+            log_event(
+                user_id=user_id,
+                app_context=app_context,
+                action="agent_process_screenshot",
+                field=",".join([str(t) for t in task_target_entities]) or "unknown",
+                resolution=resolution,
+                level=level,
+                value_preview=f"{len(sensitive_texts)} items masked" if sensitive_texts else "no sensitive data",
+                pii_types_involved=pii_types,
+            )
+        except Exception as e:
+            print(f"⚠️ 记录行为日志失败: {e}")
+
     def _selfrag_retrieve(self, image_path: str, user_command: str) -> List[Dict[str, Any]]:
         """
         Self-RAG 检索流程（基于截图内容）

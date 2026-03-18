@@ -1,331 +1,401 @@
-# skills/behavior_monitor.py
-import time
-import threading
+"""Behavior monitor runtime module.
+
+This file is the runtime implementation used by the project code.
+It standardizes all events into the shared schema defined in log_schema.md.
+
+日志分为两类：
+- behavior_log.jsonl: 用户未参与的操作（level=1）
+- correction_log.jsonl: 用户参与的操作（level=2）
+"""
+
 import json
 import os
-from datetime import datetime
+import threading
+import time
+import uuid
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Dict, Any, List
-import queue
+from typing import Any, Dict, List, Optional
+
+# 默认过期时间配置（单位：秒）
+DEFAULT_EXPIRE_SECONDS = {
+    "allow": 24 * 3600,   # allow: 24小时
+    "block": 24 * 3600,   # block: 24小时
+    "mask": 24 * 3600,    # mask: 24小时
+    "ask": 7 * 24 * 3600, # ask: 7天
+    "defer": 7 * 24 * 3600,  # defer: 7天
+    "interrupt": 7 * 24 * 3600,  # interrupt: 7天
+}
+
+CORRECTION_ACTION_MAP = {
+    "clear": "user_modified",
+    "delete": "user_modified",
+    "undo": "user_modified",
+    "cancel": "user_denied",
+    "back": "user_interrupted",
+    "input": "user_modified",
+    "fill": "user_modified",
+    "select": "user_modified",
+}
+
+
+def infer_correction(action: str) -> str:
+    return CORRECTION_ACTION_MAP.get(str(action).lower(), "")
+
+
+def normalize_events(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    records: List[Dict[str, Any]] = []
+    for raw in events:
+        ts = raw.get("timestamp")
+        if ts is None:
+            ts = int(time.time())
+        elif isinstance(ts, str):
+            try:
+                ts = int(datetime.fromisoformat(ts).timestamp())
+            except ValueError:
+                ts = int(time.time())
+
+        action = str(raw.get("action", ""))
+        correction = str(raw.get("correction", "")).strip() or infer_correction(action)
+        metadata = raw.get("metadata", {})
+        if not isinstance(metadata, dict):
+            metadata = {"raw_metadata": metadata}
+
+        records.append(
+            {
+                "timestamp": int(ts),
+                "action": action,
+                "correction": correction,
+                "metadata": metadata,
+            }
+        )
+    return records
+
+
+def build_report(records: List[Dict[str, Any]], session_id: Optional[str] = None) -> Dict[str, Any]:
+    sid = session_id or f"sess-{uuid.uuid4().hex[:12]}"
+    correction_count = sum(1 for r in records if r.get("correction"))
+    return {
+        "session_id": sid,
+        "record_count": len(records),
+        "records": records,
+        "summary": {"correction_count": correction_count},
+    }
+
+
+def _atomic_write_jsonl(file_path: Path, record: Dict[str, Any], lock: threading.Lock) -> None:
+    """线程安全的 JSONL 原子写入。
+
+    使用文件锁 + 追加写入确保原子性和线程安全。
+    """
+    with lock:
+        # 确保目录存在
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # 直接用 'a' 模式追加写入（原子操作）
+        with file_path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+class UserLogger:
+    """按用户分组的日志记录器，支持 behavior_log 和 correction_log 分离。"""
+
+    def __init__(self, user_id: str, base_dir: str = "memory/logs"):
+        self.user_id = user_id
+        self.base_dir = Path(base_dir)
+        self.user_dir = self.base_dir / user_id
+        self.behavior_log_file = self.user_dir / "behavior_log.jsonl"
+        self.correction_log_file = self.user_dir / "correction_log.jsonl"
+        self._behavior_lock = threading.Lock()
+        self._correction_lock = threading.Lock()
+
+    def _ensure_dir(self) -> None:
+        self.user_dir.mkdir(parents=True, exist_ok=True)
+
+    def write_behavior_log(self, record: Dict[str, Any]) -> None:
+        """写入用户未参与的日志（level=1）"""
+        self._ensure_dir()
+        _atomic_write_jsonl(self.behavior_log_file, record, self._behavior_lock)
+
+    def write_correction_log(self, record: Dict[str, Any]) -> None:
+        """写入用户参与的日志（level=2）"""
+        self._ensure_dir()
+        _atomic_write_jsonl(self.correction_log_file, record, self._correction_lock)
+
+    def read_behavior_logs(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """读取最近的 behavior 日志"""
+        if not self.behavior_log_file.exists():
+            return []
+        records = []
+        with self._behavior_lock:
+            with self.behavior_log_file.open("r", encoding="utf-8") as f:
+                lines = f.readlines()
+                for line in lines[-limit:]:
+                    if line.strip():
+                        records.append(json.loads(line))
+        return records
+
+    def read_correction_logs(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """读取最近的 correction 日志"""
+        if not self.correction_log_file.exists():
+            return []
+        records = []
+        with self._correction_lock:
+            with self.correction_log_file.open("r", encoding="utf-8") as f:
+                lines = f.readlines()
+                for line in lines[-limit:]:
+                    if line.strip():
+                        records.append(json.loads(line))
+        return records
+
+
+def log_event(
+    user_id: str,
+    app_context: str,
+    action: str,
+    field: Optional[str],
+    resolution: str,
+    level: int,
+    value_preview: Optional[str] = None,
+    correction_type: Optional[str] = None,
+    correction_value: Optional[str] = None,
+    pii_types_involved: Optional[List[str]] = None,
+    base_dir: str = "memory/logs",
+    expire_seconds: Optional[int] = None,
+) -> str:
+    """核心日志记录接口。
+
+    Args:
+        user_id: 用户标识
+        app_context: 应用上下文（如 "taobao", "wechat"）
+        action: 操作类型（如 "agent_fill", "user_input"）
+        field: 字段名（如 "home_address"）
+        resolution: 决策结果（allow/block/mask/ask/defer/interrupt）
+        level: 日志级别（1=用户未参与, 2=用户参与）
+        value_preview: 脱敏后的预览值
+        correction_type: 修正类型（user_modified/user_denied/user_interrupted）
+        correction_value: 用户修正后的替代值
+        pii_types_involved: 涉及的 PII 类型列表
+        base_dir: 日志根目录
+        expire_seconds: 自定义过期秒数（默认根据 resolution 自动选择）
+
+    Returns:
+        event_id: 生成的唯一事件ID
+    """
+    ts = int(time.time())
+    event_id = f"{user_id}_{ts}_{uuid.uuid4().hex[:6]}"
+
+    # 计算过期时间
+    if expire_seconds is None:
+        expire_seconds = DEFAULT_EXPIRE_SECONDS.get(resolution, 7 * 24 * 3600)
+    expire_ts = ts + expire_seconds
+
+    # 构建记录
+    record: Dict[str, Any] = {
+        "event_id": event_id,
+        "user_id": user_id,
+        "ts": ts,
+        "app_context": app_context,
+        "action": action,
+        "field": field,
+        "resolution": resolution,
+        "level": level,
+        "value_preview": value_preview,
+        "correction_type": correction_type,
+        "correction_value": correction_value,
+        "pii_types_involved": pii_types_involved or [],
+        "processed": False,
+        "expire_ts": expire_ts,
+    }
+
+    logger = UserLogger(user_id=user_id, base_dir=base_dir)
+
+    # 根据 resolution 决定写入哪些文件
+    if resolution in ["allow", "block", "mask"]:
+        # level=1: 只写 behavior_log
+        logger.write_behavior_log(record)
+    else:
+        # level=2: 同时写 behavior_log 和 correction_log
+        logger.write_behavior_log(record)
+        logger.write_correction_log(record)
+
+    return event_id
+
 
 class SessionLogger:
-    """Session 管理和持久化"""
-    
+    """Legacy: 兼容旧的 session 模式日志记录器。"""
+
     def __init__(self, base_dir: str = "logs"):
         self.base_dir = Path(base_dir)
-        self.session_dir = None
-        self.log_file = None
-        self.screenshot_dir = None
+        self.session_id = ""
+        self.session_dir: Optional[Path] = None
+        self.log_file: Optional[Path] = None
         self._lock = threading.Lock()
-        
+
     def create_session(self) -> str:
-        """创建新的 session 文件夹"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.session_dir = self.base_dir / f"session_{timestamp}"
+        self.session_id = f"sess-{timestamp}-{uuid.uuid4().hex[:6]}"
+        self.session_dir = self.base_dir / self.session_id
         self.session_dir.mkdir(parents=True, exist_ok=True)
-        
-        self.screenshot_dir = self.session_dir / "screenshots"
-        self.screenshot_dir.mkdir(parents=True, exist_ok=True)
-        
         self.log_file = self.session_dir / "action_trace.jsonl"
-        print(f"📁 Session 创建成功: {self.session_dir}")
-        return str(self.session_dir)
-    
-    def write_log(self, entry: Dict[str, Any]):
-        """线程安全的日志写入"""
+        return self.session_id
+
+    def write_record(self, record: Dict[str, Any]) -> None:
+        if self.log_file is None:
+            raise RuntimeError("Session not initialized")
         with self._lock:
-            try:
-                with open(self.log_file, "a", encoding="utf-8") as f:
-                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-            except Exception as e:
-                print(f"❌ 日志写入失败: {e}")
-    
-    def save_screenshot(self, image_data: bytes, suffix: str = "") -> str:
-        """保存截图"""
-        if not self.screenshot_dir:
-            return ""
-        timestamp = datetime.now().strftime("%H%M%S_%f")
-        filename = f"{timestamp}{suffix}.png"
-        path = self.screenshot_dir / filename
-        try:
-            with open(path, "wb") as f:
-                f.write(image_data)
-            return str(path)
-        except Exception as e:
-            print(f"❌ 截图保存失败: {e}")
-            return ""
+            with self.log_file.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
 class BehaviorMonitor:
-    """
-    全生命周期用户行为捕获与对抗审计
-    """
-    
-    def __init__(self, device=None, base_dir: str = "logs"):
-        self.device = device  # u2 实例，可选
+    """Runtime behavior monitor with normalized output contract."""
+
+    def __init__(self, device: Any = None, base_dir: str = "logs"):
+        self.device = device
         self.session = SessionLogger(base_dir)
-        self.session.create_session()
-        
-        self.is_monitoring = True
-        self.monitor_thread = None
+        self.session_id = self.session.create_session()
         self._lock = threading.Lock()
-        
-        # 状态记录
-        self.last_agent_action: Optional[Dict] = None
-        self.conflict_logs: List[Dict] = []
-        self.all_logs: List[Dict] = []
-        
-        # 事件队列，用于异步记录
-        self.event_queue = queue.Queue()
-        
-    def register_agent_action(self, target_id: str, text: str, reason: str = "", 
-                              action_type: str = "input", screenshot: bool = True):
-        """
-        Agent 行为登记
-        """
-        entry = {
-            "timestamp": datetime.now().isoformat(),
-            "role": "Agent",
-            "action": action_type,
+        self._records: List[Dict[str, Any]] = []
+        self.is_monitoring = False
+        self._user_id: Optional[str] = None
+        self._app_context: Optional[str] = None
+
+    def set_user_context(self, user_id: str, app_context: str = "") -> None:
+        """设置用户上下文，供后续 log_event 使用。"""
+        self._user_id = user_id
+        self._app_context = app_context
+
+    def _append_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        normalized = normalize_events([record])[0]
+        self.session.write_record(normalized)
+        with self._lock:
+            self._records.append(normalized)
+        return normalized
+
+    def register_event(
+        self,
+        action: str,
+        correction: str = "",
+        metadata: Optional[Dict[str, Any]] = None,
+        timestamp: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        return self._append_record(
+            {
+                "timestamp": int(timestamp or time.time()),
+                "action": action,
+                "correction": correction,
+                "metadata": metadata or {},
+            }
+        )
+
+    def register_agent_action(
+        self,
+        target_id: str,
+        text: str,
+        reason: str = "",
+        action_type: str = "input",
+        screenshot: bool = False,
+    ) -> Dict[str, Any]:
+        action = action_type if action_type.startswith("agent_") else f"agent_{action_type}"
+        metadata: Dict[str, Any] = {
+            "role": "agent",
             "target_id": target_id,
             "content": text,
             "reason": reason,
-            "screenshot_path": ""
+            "screenshot_enabled": bool(screenshot),
         }
-        
-        # 截图
-        if screenshot and self.device:
-            try:
-                img = self.device.screenshot()
-                if img:
-                    entry["screenshot_path"] = self.session.save_screenshot(img, f"_agent_{action_type}")
-            except Exception as e:
-                print(f"⚠️ 截图失败: {e}")
-        
-        self.last_agent_action = {
-            "entry": entry,
-            "timestamp": time.time(),
-            "target_id": target_id
-        }
-        
-        self._log_event(entry)
-        print(f"🤖 Agent 操作登记: {action_type} [{target_id}] <- {text}")
-    
-    def register_user_action(self, action: str, target_id: str = "", content: str = ""):
-        """
-        用户行为登记
-        """
-        entry = {
-            "timestamp": datetime.now().isoformat(),
-            "role": "User",
-            "action": action,
+        return self.register_event(action=action, correction="", metadata=metadata)
+
+    def register_user_action(self, action: str, target_id: str = "", content: str = "") -> Dict[str, Any]:
+        metadata: Dict[str, Any] = {
+            "role": "user",
             "target_id": target_id,
             "content": content,
-            "reason": "",
-            "screenshot_path": ""
         }
-        
-        if self.device:
-            try:
-                img = self.device.screenshot()
-                if img:
-                    entry["screenshot_path"] = self.session.save_screenshot(img, f"_user_{action}")
-            except Exception as e:
-                pass
-        
-        self._log_event(entry)
-        print(f"👤 User 操作登记: {action} [{target_id}] <- {content}")
-        
-        # 检查是否与 Agent 动作冲突
-        self._check_conflict(entry)
-    
-    def register_system_event(self, event: str, details: str = ""):
-        """系统事件登记"""
-        entry = {
-            "timestamp": datetime.now().isoformat(),
-            "role": "System",
-            "action": event,
-            "target_id": "",
-            "content": details,
-            "reason": "",
-            "screenshot_path": ""
-        }
-        self._log_event(entry)
-        print(f"⚙️ System 事件: {event} - {details}")
-    
-    def _log_event(self, entry: Dict):
-        """记录事件"""
-        self.session.write_log(entry)
-        with self._lock:
-            self.all_logs.append(entry)
-    
-    def _check_conflict(self, user_entry: Dict):
-        """冲突检测"""
-        if not self.last_agent_action:
-            return
-            
-        agent_entry = self.last_agent_action["entry"]
-        agent_time = self.last_agent_action["timestamp"]
-        user_time = datetime.fromisoformat(user_entry["timestamp"]).timestamp()
-        
-        # 5秒窗口内检测冲突
-        if user_time - agent_time <= 5.0:
-            conflict = {
-                "timestamp": datetime.now().isoformat(),
-                "agent_action": agent_entry,
-                "user_action": user_entry,
-                "time_diff_seconds": user_time - agent_time,
-                "is_conflict": True
-            }
-            with self._lock:
-                self.conflict_logs.append(conflict)
-            print(f"⚠️ 检测到冲突! Agent {agent_entry['action']} 后用户 {user_entry['action']}")
-    
-    def analyze_conflicts(self) -> List[Dict]:
-        """
-        冲突分析 - 使用内置分析器进行深度分析
-        """
-        analysis_results = []
-        
-        for conflict in self.conflict_logs:
-            result = ConflictAnalyzer().analyze(
-                agent_logs=[conflict["agent_action"]],
-                user_logs=[conflict["user_action"]],
-                ui_context=""
-            )
-            analysis_results.append({
-                "conflict": conflict,
-                "analysis": result
-            })
-        
-        return analysis_results
-    
-    def _monitor_loop(self):
-        """后台监控线程"""
-        while self.is_monitoring:
-            try:
-                if self.device:
-                    # 监控当前 App
-                    try:
-                        current = self.device.app_current()
-                        pkg = current.get("package", "")
-                        if pkg:
-                            self.register_system_event("app_foreground", pkg)
-                    except:
-                        pass
-            except Exception as e:
-                print(f"⚠️ 监控异常: {e}")
-            
-            time.sleep(2)
-    
-    def start(self):
-        """启动监控"""
+        correction = infer_correction(action)
+        return self.register_event(action=action, correction=correction, metadata=metadata)
+
+    def register_system_event(self, event: str, details: str = "") -> Dict[str, Any]:
+        return self.register_event(
+            action=f"system_{event}",
+            correction="",
+            metadata={"role": "system", "details": details},
+        )
+
+    def start(self) -> None:
         self.is_monitoring = True
-        self.monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
-        self.monitor_thread.start()
-        print("🔔 BehaviorMonitor 已启动")
-    
-    def stop(self):
-        """停止监控"""
+
+    def stop(self) -> None:
         self.is_monitoring = False
-        if self.monitor_thread:
-            self.monitor_thread.join(timeout=2)
-        print("🛑 BehaviorMonitor 已停止")
-    
-    def get_logs(self) -> List[Dict]:
-        """获取所有日志"""
+
+    def get_logs(self) -> List[Dict[str, Any]]:
         with self._lock:
-            return self.all_logs.copy()
-    
-    def get_conflicts(self) -> List[Dict]:
-        """获取冲突日志"""
-        with self._lock:
-            return self.conflict_logs.copy()
+            return list(self._records)
+
+    def export(self) -> Dict[str, Any]:
+        return build_report(self.get_logs(), session_id=self.session_id)
 
 
-class ConflictAnalyzer:
-    """冲突分析器 - 使用 LLM 分析对抗性交互"""
-    
-    def __init__(self):
-        pass
-    
-    def analyze(self, agent_logs: List[Dict], user_logs: List[Dict], 
-               ui_screenshot_desc: str = "") -> Dict:
-        """
-        分析冲突类型
-        """
-        # 构建分析 prompt
-        agent_str = "\n".join([
-            f"- {log.get('action')} {log.get('target_id')}: {log.get('content')}"
-            for log in agent_logs
-        ])
-        user_str = "\n".join([
-            f"- {log.get('action')} {log.get('target_id')}: {log.get('content')}"
-            for log in user_logs
-        ])
-        
-        # 简化分析逻辑
-        user_action = user_logs[0].get("action", "") if user_logs else ""
-        content = user_logs[0].get("content", "") if user_logs else ""
-        
-        # 意图冲突检测
-        is_conflict = user_action in ["delete", "clear", "undo", "back", "cancel"]
-        
-        # 敏感信息检测
-        sensitive_keywords = ["密码", "账号", "手机", "身份证", "银行卡", "地址", "姓名"]
-        is_sensitive = any(kw in content for kw in sensitive_keywords)
-        
-        if is_conflict:
-            if is_sensitive:
-                conflict_type = "PRIVACY_CONCERN"
-                confidence = 0.85
-                should_update_rag = True
-            else:
-                conflict_type = "ACCURACY_ERROR"
-                confidence = 0.7
-                should_update_rag = False
-        else:
-            conflict_type = "SYSTEM_FLOW"
-            confidence = 0.5
-            should_update_rag = False
-        
-        return {
-            "is_conflict": is_conflict,
-            "conflict_type": conflict_type,
-            "confidence_score": confidence,
-            "explanation": f"用户执行了 '{user_action}'，疑似{'隐私担忧' if is_sensitive else '操作纠正'}",
-            "should_update_rag": should_update_rag
-        }
-
-
-# --- 使用示例 ---
 if __name__ == "__main__":
-    # 模拟使用
-    monitor = BehaviorMonitor(device=None, base_dir="logs")
-    monitor.start()
-    
-    # 模拟 Agent 操作
-    monitor.register_agent_action(
-        target_id="com.app:id/address_input",
-        text="北京市海淀区二月里小区三栋",
-        reason="用户要求填写收货地址",
-        action_type="input"
+    # 测试新的 log_event 接口
+    import warnings
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+    print("=== 测试 log_event ===\n")
+
+    # 测试1: 用户未参与的 allow 操作
+    event_id_1 = log_event(
+        user_id="win_user_001",
+        app_context="taobao",
+        action="agent_fill",
+        field="home_address",
+        resolution="allow",
+        level=1,
+        value_preview="北京市海淀区xx路",
+        pii_types_involved=["address"],
+        base_dir="memory/logs",
     )
-    
-    time.sleep(1)
-    
-    # 模拟用户纠错
-    monitor.register_user_action(
-        action="clear",
-        target_id="com.app:id/address_input",
-        content=""
+    print(f"1. allow 操作 (level=1): {event_id_1}")
+
+    # 测试2: 用户参与的 ask 操作
+    event_id_2 = log_event(
+        user_id="win_user_001",
+        app_context="taobao",
+        action="agent_fill",
+        field="phone_number",
+        resolution="ask",
+        level=2,
+        value_preview="138****1234",
+        pii_types_involved=["phone"],
+        base_dir="memory/logs",
     )
-    
-    time.sleep(2)
-    
-    # 分析冲突
-    conflicts = monitor.get_conflicts()
-    print(f"\n共检测到 {len(conflicts)} 个冲突")
-    
-    # 停止监控
-    monitor.stop()
+    print(f"2. ask 操作 (level=2): {event_id_2}")
+
+    # 测试3: 用户修正了操作
+    event_id_3 = log_event(
+        user_id="win_user_001",
+        app_context="taobao",
+        action="agent_fill",
+        field="phone_number",
+        resolution="ask",
+        level=2,
+        value_preview="138****1234",
+        correction_type="user_modified",
+        correction_value="公司电话",
+        pii_types_involved=["phone"],
+        base_dir="memory/logs",
+    )
+    print(f"3. user_modified: {event_id_3}")
+
+    # 验证写入的文件
+    logger = UserLogger("win_user_001", base_dir="memory/logs")
+    print("\n=== behavior_log.jsonl ===")
+    for r in logger.read_behavior_logs(limit=10):
+        print(json.dumps(r, ensure_ascii=False))
+
+    print("\n=== correction_log.jsonl ===")
+    for r in logger.read_correction_logs(limit=10):
+        print(json.dumps(r, ensure_ascii=False))
+
+    print("\n测试完成!")
