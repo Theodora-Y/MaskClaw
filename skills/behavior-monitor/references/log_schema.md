@@ -39,6 +39,10 @@
 | `correction_value` | string \| null | 用户修正后的替代值，如 `"公司地址"`；未修正时为 null；待处理时为 null |
 | `pii_types_involved` | list[string] | 本次操作涉及的 PII 类型，如 `["PHONE_NUMBER", "HOME_ADDRESS"]`，来自 L1 的识别结果 |
 
+补充规范：
+- `app_context` 统一使用英文小写标识，例如 `wechat`、`taobao`、`hospital_his`。
+- 代码字段与文件系统命名保持英文；面向用户的文案可使用中文。
+
 ---
 
 ### 示例

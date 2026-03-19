@@ -44,11 +44,29 @@ def root():
 @app.post("/process")
 async def process_screenshot(
     image: UploadFile = File(...),
+    user_id: str = Form(None),
     command: str = Form("分析当前页面隐私"),
     return_base64: bool = Form(False)
 ):
+    """处理截图 - 隐私保护核心接口
+    
+    安全性要求：
+    - user_id 必传，防止跨用户隐私偏好污染
+    - 用户行为日志将写入 memory/logs/{user_id}/ 目录
+    """
+    # 强制校验 user_id
+    if not user_id or not str(user_id).strip():
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="user_id 不能为空")
+    
+    user_id = str(user_id).strip()
     agent = get_agent()
-    result = agent.process_image_bytes(await image.read(), image.filename or "image.jpg", command)
+    result = agent.process_image_bytes(
+        await image.read(), 
+        image.filename or "image.jpg", 
+        command,
+        user_id=user_id
+    )
 
     meta = {
         "success": True,

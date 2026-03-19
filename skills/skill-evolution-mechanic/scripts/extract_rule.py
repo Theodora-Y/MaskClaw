@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI entry for full evolution mechanic pipeline."""
+"""CLI entry for evolution mechanic closed loop."""
 
 import argparse
 import json
@@ -28,11 +28,12 @@ def _mock_logs(user_id: str) -> List[Dict[str, Any]]:
             "field": "home_address",
             "resolution": "ask",
             "level": 2,
-            "value_preview": "北京市海淀区xx路",
+            "value_preview": "home_address_sample_A",
             "correction_type": "user_modified",
-            "correction_value": "公司地址",
+            "correction_value": "company_address_A",
             "processed": False,
             "expire_ts": now + 86400,
+            "pii_types_involved": ["HOME_ADDRESS"],
         },
         {
             "event_id": f"{user_id}_{now}_002",
@@ -43,11 +44,12 @@ def _mock_logs(user_id: str) -> List[Dict[str, Any]]:
             "field": "home_address",
             "resolution": "ask",
             "level": 2,
-            "value_preview": "北京市海淀区xx路",
+            "value_preview": "home_address_sample_B",
             "correction_type": "user_modified",
-            "correction_value": "公司地址",
+            "correction_value": "company_address_A",
             "processed": False,
             "expire_ts": now + 86400,
+            "pii_types_involved": ["HOME_ADDRESS"],
         },
     ]
 
@@ -85,7 +87,7 @@ def _load_input(path: Path) -> List[Dict[str, Any]]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run full evolution mechanic pipeline")
+    parser = argparse.ArgumentParser(description="Run evolution mechanic closed loop")
     parser.add_argument("--user-id", type=str, default="", help="Target user id")
     parser.add_argument("--input", type=str, help="Path to correction logs (JSON array or JSONL)")
     parser.add_argument("--mock-input", action="store_true", help="Use built-in mock correction logs")
@@ -93,15 +95,23 @@ def main() -> int:
         "--step",
         type=str,
         default="all",
-        choices=["group", "score", "extract", "sandbox", "commit", "all"],
+        choices=["group", "score", "extract", "sandbox", "commit", "release", "all"],
         help="Pipeline step to run",
     )
     parser.add_argument("--min-support", type=int, default=2, help="Minimum group size")
     parser.add_argument("--threshold", type=float, default=0.6, help="Confidence threshold")
     parser.add_argument("--max-examples", type=int, default=5, help="Max examples sent to MiniCPM per group")
+    parser.add_argument(
+        "--sandbox-mode",
+        type=str,
+        default="auto",
+        choices=["auto", "real", "mock"],
+        help="Sandbox validator mode: auto(real/mock), real, or mock",
+    )
     parser.add_argument("--minicpm-url", type=str, default="http://127.0.0.1:8000/chat", help="MiniCPM API URL")
-    parser.add_argument("--logs-root", type=str, default="memory/logs", help="Behavior logs root")
+    parser.add_argument("--logs-root", type=str, default="memory/logs", help="Correction/behavior logs root")
     parser.add_argument("--memory-root", type=str, default="memory", help="Memory root")
+    parser.add_argument("--user-skills-root", type=str, default="user_skills", help="Generated user skills root")
     parser.add_argument("--output", type=str, help="Write output JSON to file")
     args = parser.parse_args()
 
@@ -120,9 +130,15 @@ def main() -> int:
         if not user_id:
             raise ValueError("--user-id is required when --input/--mock-input cannot infer user_id")
 
+        sandbox_mode = args.sandbox_mode
+        if sandbox_mode == "auto":
+            sandbox_mode = "mock" if args.mock_input else "real"
+
         engine = SkillEvolution(
             logs_root=args.logs_root,
             memory_root=args.memory_root,
+            user_skills_root=args.user_skills_root,
+            sandbox_mode=sandbox_mode,
             minicpm_url=args.minicpm_url,
         )
         result = engine.run_pipeline(

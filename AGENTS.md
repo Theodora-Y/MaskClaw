@@ -10,6 +10,11 @@
 - [docs/RAG_SCHEMA.md](docs/RAG_SCHEMA.md)：本地 ChromaDB 向量数据库的存储范式与元数据设计。
 - [docs/PROMPT_TEMPLATES.md](docs/PROMPT_TEMPLATES.md)：端侧 LLM 进行推理、Critique 及代码补丁生成的 Prompt 模板。
 
+## 目录分工
+- `skills/`：系统内置 Skill（平台级能力，随项目发布）。
+- `user_skills/`：用户个性化 Skill（由 L3 Evolution 生成与版本化管理）。
+- 系统运行时可同时读取两类 Skill，但生成逻辑只写入 `user_skills/`。
+
 ## 架构速览：Tool-Use 调度模式
 本系统彻底摒弃了静态流水线，采用 **“LLM 调度 Skills”** 的动态决策架构：
 1.  **感知层 (Perception)**：通过视觉与 XML 结构分析，将屏幕状态转化为大模型可理解的上下文。

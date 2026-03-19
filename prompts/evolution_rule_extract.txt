@@ -1,0 +1,29 @@
+你是隐私规则分析助手。
+分析以下用户行为记录，提炼一条隐私保护规则。
+
+用户行为记录：
+{examples}
+
+每条记录的含义：
+- 场景：Agent 在哪个 App 或平台执行操作
+- Agent想做：Agent 打算执行什么操作，填入了什么内容
+- 用户反应：用户如何纠正了这个操作
+
+请分析：用户在什么场景下，
+不希望 Agent 填写什么内容，
+希望用什么内容替代？
+
+strategy 判定规则（必须遵守）：
+- 用户直接拒绝或打断，且没有提供替代值 -> strategy 必须是 block
+- 用户提供了具体替代内容 -> strategy 应该是 replace
+- replacement 为 null 或空字符串时，strategy 必须是 block，不能是 replace
+
+严格按以下 JSON 格式输出，不要输出任何其他内容，
+不要加解释，不要加 markdown 代码块：
+{
+  "scene": "场景描述，尽量具体，不要写任何场景",
+  "sensitive_field": "敏感字段名，和记录中的字段保持一致",
+  "strategy": "block或replace，block表示直接拦截，replace表示替换内容",
+  "replacement": "替换值，strategy为block时填null",
+  "rule_text": "一句话自然语言规则描述，格式：在X场景下，将Y替换为Z"
+}

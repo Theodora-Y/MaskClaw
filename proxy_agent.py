@@ -747,10 +747,18 @@ class PrivacyProxyAgent:
             return rules[:limit]
         return self.chroma_memory.list_rules(limit=limit)
 
-    def process_image_bytes(self, image_bytes: bytes, filename: str, user_command: str, user_id: str = None) -> ProcessResult:
+    def process_image_bytes(self, image_bytes: bytes, filename: str, user_command: str, user_id: str) -> ProcessResult:
         """
         供 HTTP 层调用：bytes → 完整调度 → bytes + JSON
+        
+        Args:
+            image_bytes: 截图字节数据
+            filename: 文件名
+            user_command: 用户指令
+            user_id: 用户唯一标识（必填，用于行为日志隔离）
         """
+        if not user_id:
+            raise ValueError("user_id 不能为空，用于用户行为日志隔离")
         tfm = TempFileManager()
         try:
             input_path = tfm.write_bytes(image_bytes, safe_suffix(filename))
@@ -781,13 +789,18 @@ class PrivacyProxyAgent:
         finally:
             tfm.cleanup()
     
-    def process_screenshot(self, image_path: str, user_command: str, user_id: str = None) -> SafeScreenshot:
+    def process_screenshot(self, image_path: str, user_command: str, user_id: str) -> SafeScreenshot:
         """
         处理截图的核心流程：
         1. Self-RAG 检索规则
         2. MiniCPM 分析隐私信息
         3. Smart Masker 打码
-        4. 记录行为日志
+        4. 记录行为日志（写入 memory/logs/{user_id}/）
+        
+        Args:
+            image_path: 截图路径
+            user_command: 用户指令
+            user_id: 用户唯一标识（必填）
         """
         self.last_user_command = user_command
         
@@ -911,10 +924,7 @@ class PrivacyProxyAgent:
         sensitive_texts: List[str],
         masked_count: int,
     ) -> None:
-        """记录行为日志到 memory/logs/{user_id}/"""
-        if not user_id:
-            return
-
+        """记录行为日志到 memory/logs/{user_id}/（用户目录隔离）"""
         try:
             from skills.behavior_monitor import log_event
 
