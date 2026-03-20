@@ -1,0 +1,28 @@
+{
+  "rule_id": "demo_UserA_1774001523_001",
+  "user_id": "demo_UserA",
+  "scene": "在 wechat 场景下，用户希望修改 Agent 的操作内容",
+  "sensitive_field": "file_content",
+  "model_sensitive_field": "Agent想做",
+  "strategy": "replace",
+  "replacement": "user_provided_replacement",
+  "rule_text": "在 wechat 场景下，将 Agent 想要发送的文件内容替换为用户提供的替代值",
+  "app_context_hint": "wechat",
+  "confidence": 0.82,
+  "trigger_count": 3,
+  "needs_review": false,
+  "status": "active",
+  "created_ts": 1774001523,
+  "source_event_ids": [
+    "demo_UserA_1774001528_0007",
+    "demo_UserA_1774001529_0008",
+    "demo_UserA_1774001530_0009"
+  ],
+  "app_context": "wechat",
+  "action": "send_file",
+  "field": "file_content",
+  "skill_body": "## 何时使用\n在微信场景下，当 Agent 想要发送文件内容时，如果用户希望修改 Agent 的操作内容，该规则会被触发。\n\n## 执行步骤\n- [ ] 检查当前操作是否为在微信中发送文件。\n- [ ] 如果策略为 replace，则将文件内容替换为用户提供的替代值（user_provided_replacement）。\n- [ ] 继续执行发送文件的操作。\n\n## 边界情况\n- [特殊情况1]：如果用户未提供替代值，系统将使用默认空值或保留原内容。\n- [特殊情况2]：如果替换后的文件内容格式不符合要求，系统将提示用户重新提供有效内容。",
+  "id": "demo_UserA_1774001523_001",
+  "skill_path": "/root/autodl-tmp/privacy_agent_project/user_skills/demo_UserA/privacy-file-content-replace-v2",
+  "version": "v0.1.0"
+}

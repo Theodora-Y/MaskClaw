@@ -5,9 +5,18 @@ from rapidocr import RapidOCR
 from difflib import SequenceMatcher
 import re
 
+# 模块级单例，避免重复加载 ONNX 模型
+_ocr_engine: RapidOCR = None
+
+def get_ocr_engine() -> RapidOCR:
+    global _ocr_engine
+    if _ocr_engine is None:
+        _ocr_engine = RapidOCR()
+    return _ocr_engine
+
 class VisualMasker:
     def __init__(self):
-        self.ocr = RapidOCR()
+        self.ocr = get_ocr_engine()
 
     def _is_similar(self, text1: str, text2: str, threshold: float = 0.7) -> bool:
         if text1 in text2 or text2 in text1:

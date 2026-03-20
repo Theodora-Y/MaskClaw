@@ -1,0 +1,31 @@
+{
+  "rule_id": "demo_d1_257b_UserA_1773986241_002",
+  "user_id": "demo_d1_257b_UserA",
+  "scene": "在wechat场景下，Agent尝试发送包含特定图片内容的消息时",
+  "sensitive_field": "message_content",
+  "model_sensitive_field": "send_message",
+  "strategy": "replace",
+  "replacement": "user_provided_replacement",
+  "rule_text": "在wechat场景下，将Agent发送特定图片内容的消息替换为用户提供的替代内容",
+  "app_context_hint": "wechat",
+  "confidence": 0.94,
+  "trigger_count": 6,
+  "needs_review": false,
+  "status": "active",
+  "created_ts": 1773986241,
+  "source_event_ids": [
+    "demo_d1_257b_UserA_1773985659_0057",
+    "demo_d1_257b_UserA_1773985660_0058",
+    "demo_d1_257b_UserA_1773985661_0059",
+    "demo_d1_257b_UserA_1773985664_0062",
+    "demo_d1_257b_UserA_1773985665_0063",
+    "demo_d1_257b_UserA_1773985666_0064"
+  ],
+  "app_context": "wechat",
+  "action": "send_message",
+  "field": "message_content",
+  "skill_body": "## 何时使用\n在微信场景下，当Agent尝试发送包含特定图片内容的消息时，会触发此规则。\n\n## 执行步骤\n- [ ] 检查message_content是否包含需要替换的特定图片内容。\n- [ ] 如果需要替换，则将message_content中的特定图片内容替换为用户提供的替代内容（user_provided_replacement）。\n- [ ] 继续执行发送消息的操作。\n\n## 边界情况\n- [特殊情况1]：如果message_content为空或不包含任何内容，则无需进行替换操作。\n- [特殊情况2]：如果用户未提供替代内容（user_provided_replacement），则直接拦截该消息发送。",
+  "id": "demo_d1_257b_UserA_1773986241_002",
+  "skill_path": "user_skills/demo_d1_257b_UserA/privacy-message-content-replace-v1",
+  "version": "v0.1.0"
+}

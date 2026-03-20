@@ -1,22 +1,16 @@
-# 自动生成 Skill 的固定模板
+# 自动生成 Skill 的模板规范
 version: v0.1.0
 
 ---
 
-## 说明
+## SKILL.md 结构
 
-Evolution Mechanic 生成新 Skill 时，
-SKILL.md 的格式由本模板保证，
-MiniCPM 只负责填入内容字段，不自由生成格式。
+分两部分：
 
----
-
-## SKILL.md 模板
-
-以下 {占位符} 由脚本从 MiniCPM 输出中填入：
+**Part 1：YAML frontmatter（脚本填，不走模型）**
 
 ---
-name: privacy-{sensitive_field}-{strategy}-v{version}
+name: privacy-{field_slug}-{strategy}-v{version}
 version: v0.1.0
 generated_by: skill-evolution-mechanic
 generated_ts: {created_ts}
@@ -25,101 +19,99 @@ confidence: {confidence}
 needs_review: {needs_review}
 status: sandbox_passed
 description: >
-  {description_line1}
-  {description_line2}
+  {scene}场景下的隐私防护技能。
+  涉及字段：{sensitive_field}，策略：{strategy}。
 ---
 
-# {title}
+**Part 2：Markdown 正文（MiniCPM 第二次调用生成）**
 
-## 触发条件
-{trigger_condition}
+# {scene}隐私防护
 
-## 执行规则
-策略：{strategy}
-涉及字段：{sensitive_field}
-替换值：{replacement}（strategy=block 时无此项）
-
-## 规则来源
-从 {trigger_count} 次用户纠错行为中自动提炼
-置信度：{confidence}
-详见 rules.json
+{minicpm_generated_body}
 
 ---
 
-## 占位符填写规则
+## Part 1 占位符填写规则
 
-| 占位符 | 来源 | 示例 |
+| 占位符 | 来源 | 处理方式 |
 |---|---|---|
-| sensitive_field | MiniCPM 输出 | home-address |
-| strategy | MiniCPM 输出 | replace / block |
-| version | 脚本自增 | 1 |
-| created_ts | 系统时间 | 1700000000 |
-| user_id | correction_log | user_B |
-| confidence | 脚本计算 | 0.82 |
-| needs_review | confidence 是否在 0.6~0.75 | false |
-| title | MiniCPM 的 scene 字段 | 非电商场景地址替换 |
-| trigger_condition | 脚本根据 scene + field 生成 | app_context 不在电商白名单内且 action 涉及 home_address |
-| description_line1 | 脚本根据 scene 生成 | 在非电商平台填写地址类字段时激活 |
-| description_line2 | 脚本根据 strategy 生成 | 当 Agent 在非电商场景填写 home_address 时使用 |
-| replacement | MiniCPM 输出 | 公司地址 |
-| trigger_count | 分组数量 | 3 |
+| field_slug | sensitive_field | 下划线换连字符，去除非法字符 |
+| strategy | MiniCPM 第一次输出 | 直接用 |
+| version | 脚本自增 | 同一用户同字段同策略有旧版本则+1 |
+| created_ts | 系统时间 | Unix 时间戳 |
+| confidence | 脚本计算 | 保留两位小数 |
+| needs_review | confidence 是否在 0.6~0.75 | true/false |
+| scene | MiniCPM 第一次输出 | 直接用中文 |
+
+## Part 2 正文生成规则
+
+正文由 MiniCPM 第二次调用生成，
+详见 prompts/evolution_skill_writing.txt
+
+正文必须包含三个章节：
+  ## 何时使用
+  ## 执行步骤
+  ## 边界情况
+
+不允许出现：
+  - 原始字段名作为章节标题
+  - JSON 格式内容
+  - strategy/replacement 等技术术语直接暴露
 
 ---
 
-## rules.json 模板
-
-同一次生成，rules.json 同步写入 Chroma RAG：
-
-{
-  "rule_id": "{user_id}_{date}_{seq}",
-  "user_id": "{user_id}",
-  "scene": "{scene}",
-  "sensitive_field": "{sensitive_field}",
-  "strategy": "{strategy}",
-  "replacement": "{replacement}",
-  "rule_text": "{rule_text}",
-  "confidence": {confidence},
-  "trigger_count": {trigger_count},
-  "needs_review": {needs_review},
-  "status": "active",
-  "created_ts": {created_ts},
-  "version": "v0.1.0"
-}
-
----
-
-## 目录命名规则
-
-user_skills/{user_id}/
-  privacy-{sensitive_field}-{strategy}-v{version}/
-    SKILL.md
-    rules.json
+## name 字段生成规则
+```python
+def make_skill_name(sensitive_field, strategy, version):
+    slug = sensitive_field.lower()
+    slug = slug.replace("_", "-")
+    slug = re.sub(r'[^a-z0-9-]', '', slug)
+    return f"privacy-{slug}-{strategy}-v{version}"
+```
 
 示例：
-  user_skills/user_B/
-    privacy-home-address-replace-v1/
-      SKILL.md
-      rules.json
-
-version 从 1 开始，同一用户同一字段同一策略
-有新版本时递增：v1 → v2 → v3
-旧版本保留不删除，status 改为 deprecated
-
-Skill 名生成约束（文件系统）：
-- 仅允许 `a-z`、`0-9`、`-`。
-- 输入字段先转小写，`_` 转 `-`，连续 `-` 合并。
-- 非法字符全部移除或替换为 `-`，不能保留中文或其他 Unicode。
-
-字段转换示例：
-- `home_address` -> `home-address`
-- `file_content` -> `file-content`
-- `phone` -> `phone`
+  file_content + block → privacy-file-content-block-v1
+  home_address + replace → privacy-home-address-replace-v1
+  phone + block → privacy-phone-block-v1
 ```
 
 ---
 
-现在三个文件的关系完整了：
+## 新增的 Prompt 文件
 ```
-skill_template.md  → 定义格式
-rule_schema.md     → 定义 rules.json 字段
-confidence_policy.md → 定义何时触发生成
+prompts/
+  evolution_rule_extract.txt    ← 已有，第一次调用
+  evolution_skill_writing.txt   ← 新增，第二次调用
+```
+
+`evolution_skill_writing.txt` 内容：
+```
+你是隐私保护技能文档编写助手。
+根据以下隐私规则，编写标准的技能操作文档正文。
+
+规则信息：
+场景：{scene}
+涉及字段：{sensitive_field}
+操作策略：{strategy}（block=直接拦截，replace=替换内容）
+规则描述：{rule_text}
+触发App：{app_context_hint}
+替换值：{replacement}
+
+按以下格式输出，不要输出其他任何内容：
+
+## 何时使用
+[用一到两句话描述触发场景，面向Agent，说清楚在什么App、
+什么操作、什么内容时激活，不要出现字段名]
+
+## 执行步骤
+- [ ] [第一步]
+- [ ] [第二步]
+- [ ] [第三步]
+[strategy=block时：步骤包含检查、拦截、提示用户]
+[strategy=replace时：步骤包含检查、替换内容、继续操作]
+[步骤数量3-5个，每步一个动作]
+
+## 边界情况
+- [特殊情况1]：[处理方式]
+- [特殊情况2]：[处理方式]
+[列出1-3条，不够就写1条，不要硬凑]

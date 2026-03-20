@@ -1,1 +1,0 @@
-{"event_id": "debug_user_001_1773832236_6c7569", "user_id": "debug_user_001", "ts": 1773832236, "app_context": "chat_window", "action": "agent_process_screenshot", "field": "秘密", "resolution": "mask", "level": 1, "value_preview": "1 items masked", "correction_type": null, "correction_value": null, "pii_types_involved": ["unknown"], "processed": false, "expire_ts": 1773918636}

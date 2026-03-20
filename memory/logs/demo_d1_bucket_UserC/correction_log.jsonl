@@ -1,0 +1,1 @@
+{"event_id": "demo_d1_bucket_UserC_1773985273_0028", "user_id": "demo_d1_bucket_UserC", "ts": 1773985273, "app_context": "wechat", "action": "send_message", "field": "message_content", "value_preview": "UserC_wechat_transfer_001.png", "correction_type": "user_denied", "correction_value": null, "processed": false, "expire_ts": 1774590073}

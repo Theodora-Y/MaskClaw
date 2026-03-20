@@ -6,6 +6,7 @@ group -> score -> extract -> sandbox -> commit -> release
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import time
@@ -18,6 +19,7 @@ from urllib import request as urlrequest
 
 from memory.chroma_manager import ChromaManager
 from sandbox.sandbox_validator import SandboxValidator
+from skill_registry.skill_db import SkillDB
 
 
 VALID_CORRECTION_TYPES = {"user_denied", "user_modified", "user_interrupted"}
@@ -33,6 +35,7 @@ class SkillEvolution:
         memory_root: str = "memory",
         user_skills_root: str = "user_skills",
         prompt_template_path: str = "prompts/evolution_rule_extract.txt",
+        skill_writing_template_path: str = "prompts/evolution_skill_writing.txt",
         sandbox_mode: str = "real",
         minicpm_url: str = "http://127.0.0.1:8000/chat",
         chroma_manager: Optional[ChromaManager] = None,
@@ -41,9 +44,11 @@ class SkillEvolution:
         self.memory_root = Path(memory_root)
         self.user_skills_root = Path(user_skills_root)
         self.prompt_template_path = Path(prompt_template_path)
+        self.skill_writing_template_path = Path(skill_writing_template_path)
         self.sandbox_mode = str(sandbox_mode).strip().lower() or "real"
         self.minicpm_url = minicpm_url
         self.chroma = chroma_manager or ChromaManager(storage_dir=str(self.memory_root / "chroma_storage"))
+        self.skill_db = SkillDB(db_path=str(Path("skill_registry") / "skill_registry.db"))
 
         self.pending_file = self.memory_root / "candidate_rules_pending.jsonl"
         self.rejected_file = self.memory_root / "candidate_rules_rejected.jsonl"
@@ -229,6 +234,48 @@ class SkillEvolution:
         examples_text = self._build_examples_text(examples)
         return template.replace("{examples}", examples_text)
 
+    def _build_skill_writing_prompt(self, rule: Dict[str, Any]) -> str:
+        if not self.skill_writing_template_path.exists():
+            raise FileNotFoundError(f"Skill writing template not found: {self.skill_writing_template_path}")
+
+        template = self.skill_writing_template_path.read_text(encoding="utf-8")
+        replacements = {
+            "scene": str(rule.get("scene", "")),
+            "sensitive_field": str(rule.get("sensitive_field", "")),
+            "strategy": str(rule.get("strategy", "")),
+            "rule_text": str(rule.get("rule_text", "")),
+            "app_context_hint": str(rule.get("app_context_hint", "")),
+            "replacement": "null" if rule.get("replacement") is None else str(rule.get("replacement", "")),
+        }
+        prompt = template
+        for key, value in replacements.items():
+            prompt = prompt.replace("{" + key + "}", value)
+        return prompt
+
+    @staticmethod
+    def _is_valid_skill_body(body: str) -> bool:
+        text = (body or "").strip()
+        return (
+            "## 何时使用" in text
+            and "## 执行步骤" in text
+            and "## 边界情况" in text
+        )
+
+    @staticmethod
+    def _normalize_sensitive_field(model_field: str, fallback_field: str) -> str:
+        # Keep a stable field identifier from logs when model output drifts
+        # to semantic phrases like "Agent想做".
+        fallback = str(fallback_field or "").strip()
+        model = str(model_field or "").strip()
+        if fallback:
+            return fallback
+        if not model:
+            return ""
+        low = model.lower()
+        if low in {"agent想做", "action", "field", "content", "内容", "文本"}:
+            return ""
+        return model
+
     def _call_minicpm(self, prompt: str) -> str:
         data = urlparse.urlencode({"prompt": prompt}).encode("utf-8")
         req = urlrequest.Request(self.minicpm_url, data=data, method="POST")
@@ -248,6 +295,141 @@ class SkillEvolution:
         if s < 0 or e < 0 or e <= s:
             raise ValueError("No JSON object in model output")
         return json.loads(text[s : e + 1])
+
+    # ========== Manifest & Catalog 管理 ==========
+
+    @staticmethod
+    def compute_content_hash(skill_dir: Path) -> str:
+        """计算 Skill 内容哈希 = SKILL.md + rules.json 拼接后的 MD5"""
+        hash_obj = hashlib.md5()
+        for fname in sorted(["SKILL.md", "rules.json"]):
+            fpath = skill_dir / fname
+            if fpath.exists():
+                hash_obj.update(fpath.read_bytes())
+        return hash_obj.hexdigest()
+
+    def _load_manifest(self, user_id: str) -> Dict[str, Any]:
+        """加载用户的 manifest.json"""
+        manifest_path = self.user_skills_root / user_id / "manifest.json"
+        if manifest_path.exists():
+            try:
+                return json.loads(manifest_path.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+        return {
+            "user_id": user_id,
+            "updated_at": int(time.time()),
+            "skills": {}
+        }
+
+    def _save_manifest(self, user_id: str, manifest: Dict[str, Any]) -> None:
+        """保存 manifest.json"""
+        manifest_path = self.user_skills_root / user_id / "manifest.json"
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest["updated_at"] = int(time.time())
+        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    def _update_manifest_entry(self, user_id: str, skill_name: str, skill_dir: Path) -> None:
+        """更新 manifest 中单个 Skill 的条目"""
+        manifest = self._load_manifest(user_id)
+        content_hash = self.compute_content_hash(skill_dir)
+
+        # 从 rules.json 读取必要信息
+        rules_path = skill_dir / "rules.json"
+        confidence = 0.0
+        version = "v0.1.0"
+        if rules_path.exists():
+            try:
+                rules = json.loads(rules_path.read_text(encoding="utf-8"))
+                confidence = float(rules.get("confidence", 0.0))
+                version = str(rules.get("version", "v0.1.0"))
+            except Exception:
+                pass
+
+        manifest["skills"][skill_name] = {
+            "content_hash": content_hash,
+            "version": version,
+            "confidence": confidence,
+        }
+        self._save_manifest(user_id, manifest)
+
+    def _remove_manifest_entry(self, user_id: str, skill_name: str) -> None:
+        """从 manifest 中移除单个 Skill 条目"""
+        manifest = self._load_manifest(user_id)
+        if skill_name in manifest.get("skills", {}):
+            del manifest["skills"][skill_name]
+            self._save_manifest(user_id, manifest)
+
+    def _update_skill_catalog(self, user_id: str) -> None:
+        """重新生成 SKILL_CATALOG.md"""
+        user_dir = self.user_skills_root / user_id
+        catalog_path = user_dir / "SKILL_CATALOG.md"
+
+        manifest = self._load_manifest(user_id)
+        skills = manifest.get("skills", {})
+
+        # 收集所有 Skill 的详细信息
+        skill_entries: List[Dict[str, Any]] = []
+        for skill_name, meta in skills.items():
+            skill_dir = user_dir / skill_name
+            rules_path = skill_dir / "rules.json"
+            skill_info = {
+                "name": skill_name,
+                "content_hash": meta.get("content_hash", ""),
+                "version": meta.get("version", "v0.1.0"),
+                "confidence": meta.get("confidence", 0.0),
+                "scene": "",
+                "sensitive_field": "",
+                "strategy": "",
+                "app_context": "",
+                "action": "",
+            }
+            if rules_path.exists():
+                try:
+                    rules = json.loads(rules_path.read_text(encoding="utf-8"))
+                    skill_info.update({
+                        "scene": rules.get("scene", ""),
+                        "sensitive_field": rules.get("sensitive_field", ""),
+                        "strategy": rules.get("strategy", ""),
+                        "app_context": rules.get("app_context", ""),
+                        "action": rules.get("action", ""),
+                    })
+                except Exception:
+                    pass
+            skill_entries.append(skill_info)
+
+        # 构建 Markdown
+        lines = [
+            f"# {user_id} 的 Skills 目录\n",
+            f"> 本文件描述该用户所有 Skills 的功能、适用场景和调用方式。\n",
+            "> **客户端运行时应先加载此文件，了解如何正确调用。**\n",
+            f"> 最后更新：{time.strftime('%Y-%m-%d %H:%M:%S')}\n",
+            "\n## Skills 索引\n",
+            "| Skill 名称 | 场景 | 敏感字段 | 策略 | 置信度 |\n",
+            "|-----------|------|---------|------|--------|\n",
+        ]
+
+        for s in sorted(skill_entries, key=lambda x: x["name"]):
+            scene = s.get("scene", "")[:30]
+            field = s.get("sensitive_field", "")
+            strategy = s.get("strategy", "")
+            confidence = s.get("confidence", 0.0)
+            lines.append(f"| `{s['name']}` | {scene} | {field} | {strategy} | {confidence:.0%} |\n")
+
+        lines.append("\n## Skill 详情\n")
+        for s in sorted(skill_entries, key=lambda x: x["name"]):
+            lines.extend([
+                f"\n### {s['name']}\n",
+                f"\n**场景**：{s.get('scene', '未知')}\n",
+                f"\n**敏感字段**：`{s.get('sensitive_field', '')}`\n",
+                f"\n**策略**：`{s.get('strategy', '')}`\n",
+                f"\n**应用上下文**：`{s.get('app_context', '')}`\n",
+                f"\n**操作**：`{s.get('action', '')}`\n",
+                f"\n**置信度**：{s.get('confidence', 0.0):.0%}\n",
+                f"\n**内容哈希**：`{s.get('content_hash', '')}`\n",
+            ])
+
+        catalog_path.write_text("".join(lines), encoding="utf-8")
 
     def extract_rules(
         self,
@@ -296,12 +478,13 @@ class SkillEvolution:
                 app_context_hint = str(parsed.get("app_context_hint", "")).strip().lower()
                 if not app_context_hint:
                     app_context_hint = str(g.get("app_context", "")).strip().lower() or "all"
+                normalized_field = self._normalize_sensitive_field(model_field, fallback_field)
                 rule = {
                     "rule_id": f"{user_id}_{ts}_{len(rules)+1:03d}",
                     "user_id": user_id,
                     "scene": str(parsed.get("scene", "")).strip(),
                     # Keep field identifiers stable and English for downstream matching and file naming.
-                    "sensitive_field": fallback_field or model_field,
+                    "sensitive_field": normalized_field,
                     "model_sensitive_field": model_field,
                     "strategy": strategy,
                     "replacement": replacement,
@@ -318,6 +501,14 @@ class SkillEvolution:
                     "action": str(g.get("action", "")),
                     "field": fallback_field,
                 }
+
+                # Second model call: generate SKILL.md narrative body.
+                skill_prompt = self._build_skill_writing_prompt(rule)
+                skill_body_raw = self._call_minicpm(skill_prompt).strip()
+                if not self._is_valid_skill_body(skill_body_raw):
+                    raise ValueError("Invalid skill body generated by model")
+                rule["skill_body"] = skill_body_raw
+
                 rules.append(rule)
             except Exception as exc:
                 errors.append(
@@ -443,6 +634,9 @@ class SkillEvolution:
         confidence = float(rule.get("confidence", 0.0))
         needs_review = bool(rule.get("needs_review", False))
         created_ts = int(rule.get("created_ts", int(time.time())))
+        skill_body = str(rule.get("skill_body", "")).strip()
+        if not skill_body:
+            raise ValueError("Missing skill_body in generated rule")
 
         skill_md = (
             "---\n"
@@ -459,15 +653,7 @@ class SkillEvolution:
             f"  策略为 {rule.get('strategy', '')}。\n"
             "---\n\n"
             f"# {rule.get('scene', 'Privacy Rule')}\n\n"
-            "## 触发条件\n"
-            f"- app_context 匹配: {rule.get('app_context', '')}\n"
-            f"- action 匹配: {rule.get('action', '')}\n"
-            f"- 字段: {rule.get('sensitive_field', '')}\n\n"
-            "## 执行规则\n"
-            f"- strategy: {rule.get('strategy', '')}\n"
-            f"- replacement: {rule.get('replacement', None)}\n"
-            f"- rule_text: {rule.get('rule_text', '')}\n"
-            f"- app_context_hint: {rule.get('app_context_hint', '')}\n"
+            f"{skill_body}\n"
         )
         (skill_dir / "SKILL.md").write_text(skill_md, encoding="utf-8")
 
@@ -478,6 +664,18 @@ class SkillEvolution:
             json.dumps(rule_copy, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+
+        version_tag = f"v{version}"
+        self.skill_db.add_skill(
+            user_id=user_id,
+            skill_name=base_name,
+            version=version_tag,
+            path=str(skill_dir.as_posix()),
+            rule_dict=rule_copy,
+        )
+        catalog_md = self.skill_db.generate_catalog_snapshot(user_id)
+        catalog_path = self.user_skills_root / user_id / "SKILL_CATALOG.md"
+        catalog_path.write_text(catalog_md, encoding="utf-8")
 
         return {
             "user_id": user_id,

@@ -109,6 +109,18 @@ def main() -> int:
         help="Sandbox validator mode: auto(real/mock), real, or mock",
     )
     parser.add_argument("--minicpm-url", type=str, default="http://127.0.0.1:8000/chat", help="MiniCPM API URL")
+    parser.add_argument(
+        "--rule-prompt-template",
+        type=str,
+        default="prompts/evolution_rule_extract.txt",
+        help="Rule extraction prompt template path",
+    )
+    parser.add_argument(
+        "--skill-writing-template",
+        type=str,
+        default="prompts/evolution_skill_writing.txt",
+        help="Skill writing prompt template path",
+    )
     parser.add_argument("--logs-root", type=str, default="memory/logs", help="Correction/behavior logs root")
     parser.add_argument("--memory-root", type=str, default="memory", help="Memory root")
     parser.add_argument("--user-skills-root", type=str, default="user_skills", help="Generated user skills root")
@@ -138,6 +150,8 @@ def main() -> int:
             logs_root=args.logs_root,
             memory_root=args.memory_root,
             user_skills_root=args.user_skills_root,
+            prompt_template_path=args.rule_prompt_template,
+            skill_writing_template_path=args.skill_writing_template,
             sandbox_mode=sandbox_mode,
             minicpm_url=args.minicpm_url,
         )

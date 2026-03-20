@@ -1,0 +1,28 @@
+{
+  "rule_id": "demo_d1_bucket_UserA_1773986251_001",
+  "user_id": "demo_d1_bucket_UserA",
+  "scene": "在 wechat 场景下，Agent 想要 send_file 时",
+  "sensitive_field": "file_content",
+  "model_sensitive_field": "Agent想做",
+  "strategy": "replace",
+  "replacement": "user_provided_replacement",
+  "rule_text": "在 wechat 场景下，将 Agent 想要发送的文件内容替换为用户提供的替代值",
+  "app_context_hint": "wechat",
+  "confidence": 0.82,
+  "trigger_count": 3,
+  "needs_review": false,
+  "status": "active",
+  "created_ts": 1773986251,
+  "source_event_ids": [
+    "demo_d1_bucket_UserA_1773985252_0007",
+    "demo_d1_bucket_UserA_1773985253_0008",
+    "demo_d1_bucket_UserA_1773985254_0009"
+  ],
+  "app_context": "wechat",
+  "action": "send_file",
+  "field": "file_content",
+  "skill_body": "## 何时使用\n在微信场景下，当您准备发送文件时，如果需要对文件内容进行隐私保护处理。\n\n## 执行步骤\n- [ ] 检查当前操作是否为在微信中发送文件。\n- [ ] 根据隐私规则，将文件内容替换为用户提供的替代值。\n- [ ] 继续执行发送文件的操作。\n\n## 边界情况\n- [特殊情况1]：如果用户未提供替代值，则无法完成替换操作。\n- [特殊情况2]：如果文件内容为空，则直接跳过替换步骤。",
+  "id": "demo_d1_bucket_UserA_1773986251_001",
+  "skill_path": "user_skills/demo_d1_bucket_UserA/privacy-file-content-replace-v1",
+  "version": "v0.1.0"
+}
