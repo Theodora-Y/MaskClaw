@@ -1,11 +1,41 @@
 {
   "user_id": "demo_UserA",
-  "updated_at": 1774001530,
+  "updated_at": 1774538623,
   "skills": {
-    "privacy-file-content-replace-v2": {
-      "content_hash": "d1c9733be79349786896038bde09e191",
-      "version": "v0.1.0",
-      "confidence": 0.82
+    "wechat-send-message": {
+      "content_hash": "104733915940",
+      "version": "v1.0.0",
+      "confidence": 0.85
+    },
+    "xiaohongshu-comment": {
+      "content_hash": "71162732b920",
+      "version": "v1.0.0",
+      "confidence": 0.85
+    },
+    "order-food": {
+      "content_hash": "d57abe511357",
+      "version": "v1.0.0",
+      "confidence": 0.85
+    },
+    "browse-moments": {
+      "content_hash": "41aa1bd0f596",
+      "version": "v1.0.0",
+      "confidence": 0.85
+    },
+    "send-work-email": {
+      "content_hash": "a0a4edff29d4",
+      "version": "v1.0.0",
+      "confidence": 0.85
+    },
+    "dingtalk-group-message": {
+      "content_hash": "5914fa8f3fa5",
+      "version": "v1.0.0",
+      "confidence": 0.85
+    },
+    "his-patient-record": {
+      "content_hash": "3c51a9dcc15a",
+      "version": "v1.0.0",
+      "confidence": 0.85
     }
   }
 }

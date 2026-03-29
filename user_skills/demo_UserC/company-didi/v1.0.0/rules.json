@@ -1,0 +1,22 @@
+{
+  "rule_id": "demo_UserC_1774538766_company-",
+  "user_id": "demo_UserC",
+  "scene": "使用企业滴滴账户申请出差用车",
+  "sensitive_field": "行程起点终点",
+  "model_sensitive_field": "Agent想做的操作内容",
+  "strategy": "mask",
+  "replacement": "[已脱敏]",
+  "rule_text": "行程数据仅用于报销和安全管理，确保真实准确。",
+  "app_context_hint": "didienterprise",
+  "confidence": 0.8,
+  "needs_review": false,
+  "status": "active",
+  "created_ts": 1774538766,
+  "source_event_ids": [],
+  "app_context": "didienterprise",
+  "action": "send_message",
+  "field": "行程起点终点",
+  "skill_body": "## 何时使用\\n在企业滴滴的使用企业滴滴账户申请出差用车时，该技能被触发。\\n\\n## 执行步骤\\n- [ ] 步骤1：打开企业滴滴应用，点击底部菜单栏的‘用车’选项，进入用车界面。\\n- [ ] 步骤2：选择‘企业滴滴账户’登录，输入企业邮箱和密码完成登录。\\n- [ ] 步骤3：点击‘申请出差用车’按钮，进入出差用车申请页面。\\n- [ ] 步骤4：填写出行日期、出发时间、预计返回时间等信息，选择用车类型（如商务车）。\\n- [ ] 步骤5：设置行程起点和终点，确认后点击‘提交申请’按钮。\\n- [ ] 步骤6：等待企业滴滴后台审批，审批通过后系统会通知您安排车辆。\\n\\n## 边界情况\\n- [特殊情况1]：若网络连接不稳定或超时，自动重试操作直至成功或提示用户检查网络。\\n- [特殊情况2]：若用户拒绝授权位置权限，自动跳过位置自动填充，手动输入起点和终点地址，并提醒用户注意隐私保护。",
+  "id": "demo_UserC_1774538766_company-",
+  "version": "v1.0.0"
+}

@@ -1,0 +1,21 @@
+{
+  "_description": "SOP Evolution 进化流水线配置",
+  "evolution": {
+    "max_iterations": 50,
+    "score_threshold": 0.9,
+    "consecutive_threshold": 3,
+    "stagnation_threshold": 5
+  },
+  "sandbox": {
+    "enabled": true,
+    "timeout_seconds": 300
+  },
+  "publish": {
+    "auto_mark_processed": true,
+    "transaction_enabled": true
+  },
+  "debug": {
+    "log_sql": false,
+    "verbose": false
+  }
+}

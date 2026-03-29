@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 """
 Phone Agent CLI - AI-powered phone automation.
 
@@ -11,6 +16,16 @@ Environment Variables:
     PHONE_AGENT_API_KEY: API key for model authentication (default: EMPTY)
     PHONE_AGENT_MAX_STEPS: Maximum steps per task (default: 100)
     PHONE_AGENT_DEVICE_ID: ADB device ID for multi-device setups
+    PHONE_AGENT_PRIVACY_PROXY: Enable privacy proxy hook (true/false, default: false)
+    PHONE_AGENT_PRIVACY_SERVER_URL: Privacy server URL (default: http://127.0.0.1:9001)
+    PHONE_AGENT_PRIVACY_COMMAND: Privacy command sent to server (default: 分析隐私并打码)
+    PHONE_AGENT_PRIVACY_CONNECT_TIMEOUT: Privacy connect timeout in seconds (default: 5)
+    PHONE_AGENT_PRIVACY_TIMEOUT: Privacy request timeout in seconds (default: 60)
+    PHONE_AGENT_PRIVACY_RETRY_COUNT: Privacy request retry count after timeout (default: 2)
+    PHONE_AGENT_PRIVACY_RETRY_INTERVAL_MS: Retry wait time in milliseconds (default: 500)
+    PHONE_AGENT_PRIVACY_INSTALL_HOOK: Auto-call /hook/install at startup (true/false, default: true)
+    PHONE_AGENT_PRIVACY_DEBUG: Print privacy proxy request logs (true/false, default: false)
+    PHONE_AGENT_MAX_IMAGE_SIDE: Max uploaded image side in pixels (default: 2048)
 """
 
 import argparse

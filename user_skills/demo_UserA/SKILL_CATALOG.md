@@ -1,27 +1,11 @@
-# demo_UserA 的 Skills 目录
-> 本文件描述该用户所有 Skills 的功能、适用场景和调用方式。
-> **客户端运行时应先加载此文件，了解如何正确调用。**
-> 最后更新：2026-03-20 18:12:10
+# demo_UserA Skill 目录
 
-## Skills 索引
-| Skill 名称 | 场景 | 敏感字段 | 策略 | 置信度 |
-|-----------|------|---------|------|--------|
-| `privacy-file-content-replace-v2` | 在 wechat 场景下，用户希望修改 Agent 的操作内 | file_content | replace | 82% |
+共 7 条 Skill（自动生成）
 
-## Skill 详情
-
-### privacy-file-content-replace-v2
-
-**场景**：在 wechat 场景下，用户希望修改 Agent 的操作内容
-
-**敏感字段**：`file_content`
-
-**策略**：`replace`
-
-**应用上下文**：`wechat`
-
-**操作**：`send_file`
-
-**置信度**：82%
-
-**内容哈希**：`d1c9733be79349786896038bde09e191`
+- **发送微信消息** (`wechat-send-message`) — 微信 — 发送消息时避免泄露病历、身份证等隐私信息。
+- **发送小红书评论** (`xiaohongshu-comment`) — 小红书 — 评论内容公开可见，不得包含真实姓名、手机号、就诊记录等隐私信息。
+- **点外卖** (`order-food`) — 外卖平台 — 收货地址和电话仅用于配送，不得与工作内容混淆；外卖订单不含医疗标记。
+- **浏览朋友圈** (`browse-moments`) — 微信 — 浏览朋友圈时不记录行为，不截图转发他人隐私信息。
+- **发送工作邮件** (`send-work-email`) — 邮件 — 邮件内容需避免泄露患者信息、内部通讯录、财务数据等敏感内容。
+- **钉钉工作群发消息** (`dingtalk-group-message`) — 钉钉 — 工作群消息仅限群内可见，不得转发至外部；消息内容不得包含未脱敏的客户信息。
+- **填写HIS系统患者记录** (`his-patient-record`) — HIS系统 — 

@@ -1,7 +1,0 @@
- .\scripts\start_adb_with_privacy.ps1 `
->>   -Task "打开微信，给Theodora第一条朋友圈点赞" `
->>   -BaseUrl "https://api-inference.modelscope.cn/v1" `
->>   -Model "ZhipuAI/AutoGLM-Phone-9B" `
->>   -ApiKey "ms-f31f6d28-c208-4ddf-b5f0-9da3b59e4b94" `
->>   -PrivacyDebug `
->>   -SavePrivacyImages

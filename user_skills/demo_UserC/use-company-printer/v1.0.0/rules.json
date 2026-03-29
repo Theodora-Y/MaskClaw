@@ -1,0 +1,22 @@
+{
+  "rule_id": "demo_UserC_1774538736_use-comp",
+  "user_id": "demo_UserC",
+  "scene": "在公司使用共享打印机打印或复印文件",
+  "sensitive_field": "文件内容",
+  "model_sensitive_field": "Agent想做的操作内容",
+  "strategy": "mask",
+  "replacement": "[已脱敏]",
+  "rule_text": "打印前确认文件无隐私内容，及时取走，涉密文件需处理。",
+  "app_context_hint": "office",
+  "confidence": 0.8,
+  "needs_review": false,
+  "status": "active",
+  "created_ts": 1774538736,
+  "source_event_ids": [],
+  "app_context": "office",
+  "action": "send_message",
+  "field": "文件内容",
+  "skill_body": "## 何时使用\\n在办公设备的在公司使用共享打印机打印或复印文件时，该技能被触发。\\n\\n## 执行步骤\\n- [ ] 步骤1：打开打印机应用程序，选择“打印”或“复印”功能。\\n- [ ] 步骤2：将文件拖入打印任务列表或点击“添加文件”，选择需要打印的文件。\\n- [ ] 步骤3：检查文件内容，确保不含隐私信息（如客户名单、财务报告等），确认后点击“继续”。\\n- [ ] 步骤4：设置打印份数和纸张类型，点击“开始打印”。\\n- [ ] 步骤5：打印完成后，及时到打印机处取走打印件。\\n- [ ] 步骤6：如果打印的是涉密文件，使用碎纸机处理，确保信息安全。  \\n\\n## 边界情况\\n- [特殊情况1]：如果发现文件包含隐私内容，直接拒绝打印操作，并提示用户修改文件。\\n- [特殊情况2]：如果打印机网络连接失败或操作超时，自动取消打印任务，并提示用户检查网络连接或重新尝试。 ",
+  "id": "demo_UserC_1774538736_use-comp",
+  "version": "v1.0.0"
+}

@@ -1,0 +1,34 @@
+{
+  "app_context_hint": "wechat",
+  "app_context": "微信",
+  "scene": "在微信聊天窗口中发送一条文字消息",
+  "rule_text": "消息内容可能被监控或转发，需注意不得包含未脱敏的病历、身份证、家庭住址等隐私信息",
+  "sensitive_field": "病历,身份证,家庭住址",
+  "strategy": "auto_mask",
+  "confidence": 0.90,
+  "created_ts": 1740500000,
+  "privacy_constraints": [
+    "发送前自动检测是否包含身份证号、家庭住址等敏感信息",
+    "医疗相关词汇出现时提示用户确认",
+    "转发消息时提示原始内容隐私风险"
+  ],
+  "steps": [
+    {
+      "step_num": 1,
+      "title": "内容审查",
+      "action": "检查消息内容是否包含身份证号、家庭住址、手机号、病历等隐私信息",
+      "has_privacy_protection": true
+    },
+    {
+      "step_num": 2,
+      "title": "隐私提醒",
+      "action": "如有敏感内容，弹出提醒让用户确认是否发送",
+      "has_privacy_protection": true
+    },
+    {
+      "step_num": 3,
+      "title": "发送",
+      "action": "用户确认后执行发送"
+    }
+  ]
+}

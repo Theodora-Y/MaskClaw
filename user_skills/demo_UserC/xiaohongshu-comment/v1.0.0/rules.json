@@ -1,0 +1,22 @@
+{
+  "rule_id": "demo_UserC_1774538636_xiaohong",
+  "user_id": "demo_UserC",
+  "scene": "在小红书帖子下方发布一条评论",
+  "sensitive_field": "真实姓名、手机号、就诊记录",
+  "model_sensitive_field": "Agent想做的操作内容",
+  "strategy": "replace",
+  "replacement": "[已脱敏]",
+  "rule_text": "评论公开可见，不得包含真实姓名、手机号、就诊记录等隐私信息。",
+  "app_context_hint": "xiaohongshu",
+  "confidence": 0.85,
+  "needs_review": false,
+  "status": "active",
+  "created_ts": 1774538636,
+  "source_event_ids": [],
+  "app_context": "xiaohongshu",
+  "action": "send_message",
+  "field": "真实姓名、手机号、就诊记录",
+  "skill_body": "## 何时使用\\n在小红书的在小红书帖子下方发布一条评论时，该技能被触发。\\n\\n## 执行步骤\\n- [ ] 步骤1：点击帖子下方的“评论”按钮，进入评论输入框。\\n- [ ] 步骤2：输入评论内容（确保不包含真实姓名、手机号、就诊记录等隐私信息）。\\n- [ ] 步骤3：点击输入框右侧的“发布”按钮，提交评论。\\n\\n## 边界情况\\n- [特殊情况1]：如果网络连接失败或超时，提示用户检查网络并重试。\\n- [特殊情况2]：如果用户拒绝评论发布请求，直接返回上一步，等待用户重新操作。",
+  "id": "demo_UserC_1774538636_xiaohong",
+  "version": "v1.0.0"
+}

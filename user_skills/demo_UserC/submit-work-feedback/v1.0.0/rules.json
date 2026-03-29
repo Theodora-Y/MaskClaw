@@ -1,0 +1,22 @@
+{
+  "rule_id": "demo_UserC_1774538812_submit-w",
+  "user_id": "demo_UserC",
+  "scene": "在企业内部系统提交工作改进建议或投诉",
+  "sensitive_field": "同事姓名、联系方式",
+  "model_sensitive_field": "Agent想做的操作内容",
+  "strategy": "mask",
+  "replacement": "[已脱敏]",
+  "rule_text": "反馈内容隐私保护，不泄露个人信息。",
+  "app_context_hint": "intranet",
+  "confidence": 0.8,
+  "needs_review": false,
+  "status": "active",
+  "created_ts": 1774538812,
+  "source_event_ids": [],
+  "app_context": "intranet",
+  "action": "send_message",
+  "field": "同事姓名、联系方式",
+  "skill_body": "## 何时使用\\n在内部系统的在企业内部系统提交工作改进建议或投诉时，该技能被触发。\\n\\n## 执行步骤\\n- [ ] 步骤1：进入内部系统，点击【工作改进建议/投诉】入口\\n- [ ] 步骤2：选择反馈类型（建议/投诉），点击【下一步】\\n- [ ] 步骤3：输入反馈标题，点击【下一步】\\n- [ ] 步骤4：详细描述问题或建议，确保内容真实、不泄露同事信息，点击【下一步】\\n- [ ] 步骤5：确认是否匿名反馈，若匿名需检查系统支持，点击【提交】\\n- [ ] 步骤6：核对所有信息无误后，点击【确认提交】，等待系统反馈\\n\\n## 边界情况\\n- [特殊情况1]：操作超时，返回上一步重新尝试\\n- [特殊情况2]：网络失败，检查网络连接后重试\\n- [特殊情况3]：用户拒绝匿名反馈，提示无法提交，引导用户联系管理员解决",
+  "id": "demo_UserC_1774538812_submit-w",
+  "version": "v1.0.0"
+}

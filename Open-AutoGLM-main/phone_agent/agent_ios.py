@@ -166,6 +166,7 @@ class IOSPhoneAgent:
         current_app = get_current_app(
             wda_url=self.agent_config.wda_url, session_id=self.agent_config.session_id
         )
+        privacy_meta = getattr(screenshot, "privacy_metadata", None) or {}
 
         # Build messages
         if is_first:
@@ -173,7 +174,11 @@ class IOSPhoneAgent:
                 MessageBuilder.create_system_message(self.agent_config.system_prompt)
             )
 
-            screen_info = MessageBuilder.build_screen_info(current_app)
+            screen_info = MessageBuilder.build_screen_info(
+                current_app,
+                matched_rules=privacy_meta.get("matched_rules", []),
+                masked_count=privacy_meta.get("masked_count", 0),
+            )
             text_content = f"{user_prompt}\n\n{screen_info}"
 
             self._context.append(
@@ -182,7 +187,11 @@ class IOSPhoneAgent:
                 )
             )
         else:
-            screen_info = MessageBuilder.build_screen_info(current_app)
+            screen_info = MessageBuilder.build_screen_info(
+                current_app,
+                matched_rules=privacy_meta.get("matched_rules", []),
+                masked_count=privacy_meta.get("masked_count", 0),
+            )
             text_content = f"** Screen Info **\n\n{screen_info}"
 
             self._context.append(

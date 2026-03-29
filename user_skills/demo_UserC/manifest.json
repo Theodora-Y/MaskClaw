@@ -1,0 +1,116 @@
+{
+  "user_id": "demo_UserC",
+  "updated_at": 1774538820,
+  "skills": {
+    "wechat-send-message": {
+      "content_hash": "0c4de60035a9",
+      "version": "v1.0.0",
+      "confidence": 0.85
+    },
+    "xiaohongshu-comment": {
+      "content_hash": "715898220ed1",
+      "version": "v1.0.0",
+      "confidence": 0.85
+    },
+    "order-food": {
+      "content_hash": "2eea6daf6d2a",
+      "version": "v1.0.0",
+      "confidence": 0.85
+    },
+    "browse-moments": {
+      "content_hash": "ec97e21aa3b7",
+      "version": "v1.0.0",
+      "confidence": 0.85
+    },
+    "send-work-email": {
+      "content_hash": "cb163528a2e7",
+      "version": "v1.0.0",
+      "confidence": 0.85
+    },
+    "dingtalk-group-message": {
+      "content_hash": "a28c2c381909",
+      "version": "v1.0.0",
+      "confidence": 0.85
+    },
+    "his-patient-record": {
+      "content_hash": "afa20e95759c",
+      "version": "v1.0.0",
+      "confidence": 0.85
+    },
+    "wechat-transfer-money": {
+      "content_hash": "fe17c78e6513",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    },
+    "wechat-share-location": {
+      "content_hash": "0c5747007d1a",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    },
+    "alipay-scan-pay": {
+      "content_hash": "2dd0c52c908a",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    },
+    "send-business-email": {
+      "content_hash": "43bfd6d02f3e",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    },
+    "dingtalk-video-meeting": {
+      "content_hash": "4475ad9d8701",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    },
+    "use-company-printer": {
+      "content_hash": "2718e8aa0eb6",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    },
+    "internal-file-share": {
+      "content_hash": "29260b80942a",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    },
+    "work-calendar": {
+      "content_hash": "f8305b5358f2",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    },
+    "company-didi": {
+      "content_hash": "ec43741897ac",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    },
+    "submit-reimbursement": {
+      "content_hash": "155fabd0817f",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    },
+    "browse-work-chat": {
+      "content_hash": "a0464b3d0135",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    },
+    "join-online-meeting": {
+      "content_hash": "dcd092f81528",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    },
+    "clock-in-attendance": {
+      "content_hash": "bda749cf4318",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    },
+    "submit-work-feedback": {
+      "content_hash": "93e49eb8cc47",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    },
+    "order-office-supplies": {
+      "content_hash": "5336fc814447",
+      "version": "v1.0.0",
+      "confidence": 0.8
+    }
+  }
+}

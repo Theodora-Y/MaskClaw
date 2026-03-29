@@ -43,7 +43,11 @@ class ActionHandler:
         self.takeover_callback = takeover_callback or self._default_takeover
 
     def execute(
-        self, action: dict[str, Any], screen_width: int, screen_height: int
+        self,
+        action: dict[str, Any],
+        screen_width: int,
+        screen_height: int,
+        privacy_metadata: dict[str, Any] | None = None,
     ) -> ActionResult:
         """
         Execute an action from the AI model.
@@ -80,6 +84,16 @@ class ActionHandler:
                 message=f"Unknown action: {action_name}",
             )
 
+        block_reason = self._privacy_guard(
+            action, action_name, screen_width, screen_height, privacy_metadata
+        )
+        if block_reason:
+            return ActionResult(
+                success=False,
+                should_finish=False,
+                message=block_reason,
+            )
+
         try:
             return handler_method(action, screen_width, screen_height)
         except Exception as e:
@@ -106,6 +120,157 @@ class ActionHandler:
             "Interact": self._handle_interact,
         }
         return handlers.get(action_name)
+
+    def _privacy_guard(
+        self,
+        action: dict[str, Any],
+        action_name: str | None,
+        screen_width: int,
+        screen_height: int,
+        privacy_metadata: dict[str, Any] | None,
+    ) -> str | None:
+        """Apply minimal privacy guard before action execution."""
+        if not isinstance(privacy_metadata, dict):
+            return None
+
+        matched_rules = privacy_metadata.get("matched_rules", [])
+
+        if not isinstance(matched_rules, list) or not matched_rules:
+            return None
+
+        high_sensitivity_types = self._get_high_sensitivity_types(matched_rules)
+
+        # Guard typing whenever high-sensitivity rules are matched.
+        if action_name in {"Type", "Type_Name"} and high_sensitivity_types:
+            text = str(action.get("text", ""))
+            if self._contains_restricted_sensitive_text(text, high_sensitivity_types):
+                return "Action blocked by privacy guard: matched_rules contain high-sensitivity fields and Type text looks like real sensitive data"
+
+        # Guard tapping into sensitive regions if server provides region coordinates.
+        if action_name in {"Tap", "Double Tap", "Long Press"}:
+            element = action.get("element")
+            if isinstance(element, list) and len(element) >= 2:
+                x, y = self._convert_relative_to_absolute(element, screen_width, screen_height)
+                for rule in matched_rules:
+                    regions = self._extract_rule_regions(rule, screen_width, screen_height)
+                    if any(self._point_in_region(x, y, region) for region in regions):
+                        return "Action blocked by privacy guard: tap target is inside sensitive region"
+
+        return None
+
+    @staticmethod
+    def _get_high_sensitivity_types(matched_rules: list[Any]) -> set[str]:
+        """Extract high-sensitivity categories from matched rules."""
+        categories: set[str] = set()
+        for rule in matched_rules:
+            if not isinstance(rule, dict):
+                continue
+
+            doc = str(rule.get("document", ""))
+            target = str(rule.get("target_field", ""))
+            text = f"{doc} {target}"
+
+            if any(keyword in text for keyword in ["身份证", "证件号", "身份证号"]):
+                categories.add("id")
+            if any(keyword in text for keyword in ["银行卡", "卡号", "bank"]):
+                categories.add("bank")
+            if any(keyword in text for keyword in ["详细地址", "收货地址", "家庭住址", "地址"]):
+                categories.add("address")
+
+        return categories
+
+    @staticmethod
+    def _contains_restricted_sensitive_text(text: str, sensitivity_types: set[str]) -> bool:
+        """Check whether Type payload appears to contain restricted sensitive data."""
+        normalized = text.strip()
+        if not normalized:
+            return False
+
+        if "id" in sensitivity_types and re.search(r"\b\d{17}[0-9Xx]\b", normalized):
+            return True
+
+        # Common bank card length ranges from 12 to 19 digits.
+        if "bank" in sensitivity_types and re.search(r"\b\d{12,19}\b", normalized):
+            return True
+
+        if "address" in sensitivity_types:
+            if len(normalized) >= 8 and any(
+                kw in normalized for kw in ["省", "市", "区", "县", "路", "街", "巷", "号", "栋", "室"]
+            ):
+                return True
+
+        return False
+
+    def _extract_rule_regions(
+        self, rule: Any, screen_width: int, screen_height: int
+    ) -> list[tuple[int, int, int, int]]:
+        """Extract sensitive regions from matched rule payload."""
+        if not isinstance(rule, dict):
+            return []
+
+        raw_regions = []
+        for key in ("regions", "bbox", "box", "rect", "region"):
+            value = rule.get(key)
+            if value is None:
+                continue
+            if key == "regions" and isinstance(value, list):
+                raw_regions.extend(value)
+            else:
+                raw_regions.append(value)
+
+        regions: list[tuple[int, int, int, int]] = []
+        for item in raw_regions:
+            parsed = self._parse_region(item, screen_width, screen_height)
+            if parsed is not None:
+                regions.append(parsed)
+        return regions
+
+    def _parse_region(
+        self, region: Any, screen_width: int, screen_height: int
+    ) -> tuple[int, int, int, int] | None:
+        """Parse region definitions from dict/list forms into absolute pixel box."""
+        values: list[float] | None = None
+
+        if isinstance(region, dict):
+            keys = ["x1", "y1", "x2", "y2"]
+            if all(k in region for k in keys):
+                values = [region[k] for k in keys]
+            else:
+                alt_keys = ["left", "top", "right", "bottom"]
+                if all(k in region for k in alt_keys):
+                    values = [region[k] for k in alt_keys]
+        elif isinstance(region, list) and len(region) >= 4:
+            values = region[:4]
+
+        if values is None:
+            return None
+
+        try:
+            x1 = self._scale_coord(float(values[0]), screen_width)
+            y1 = self._scale_coord(float(values[1]), screen_height)
+            x2 = self._scale_coord(float(values[2]), screen_width)
+            y2 = self._scale_coord(float(values[3]), screen_height)
+        except (TypeError, ValueError):
+            return None
+
+        left, right = sorted((x1, x2))
+        top, bottom = sorted((y1, y2))
+        return left, top, right, bottom
+
+    @staticmethod
+    def _scale_coord(value: float, span: int) -> int:
+        """Convert normalized or relative coordinates to absolute pixel coordinates."""
+        if 0.0 <= value <= 1.0:
+            return int(value * span)
+        if 1.0 < value <= 1000.0:
+            return int(value / 1000.0 * span)
+        return int(value)
+
+    @staticmethod
+    def _point_in_region(x: int, y: int, region: tuple[int, int, int, int]) -> bool:
+        """Check whether a point is inside a rectangular region."""
+        left, top, right, bottom = region
+        return left <= x <= right and top <= y <= bottom
 
     def _convert_relative_to_absolute(
         self, element: list[int], screen_width: int, screen_height: int

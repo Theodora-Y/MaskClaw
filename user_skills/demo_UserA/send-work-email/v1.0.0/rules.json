@@ -1,0 +1,22 @@
+{
+  "rule_id": "demo_UserA_1774538604_send-wor",
+  "user_id": "demo_UserA",
+  "scene": "使用企业邮箱发送一封工作邮件",
+  "sensitive_field": "患者信息",
+  "model_sensitive_field": "Agent想做的操作内容",
+  "strategy": "mask",
+  "replacement": "[已脱敏]",
+  "rule_text": "邮件内容需避免泄露患者信息、内部通讯录、财务数据等敏感内容。",
+  "app_context_hint": "email",
+  "confidence": 0.85,
+  "needs_review": false,
+  "status": "active",
+  "created_ts": 1774538604,
+  "source_event_ids": [],
+  "app_context": "email",
+  "action": "send_message",
+  "field": "患者信息",
+  "skill_body": "## 何时使用\\n在邮件的使用企业邮箱发送一封工作邮件时，该技能被触发。\\n\\n## 执行步骤\\n- [ ] 步骤1：打开手机上的邮件应用，点击“新建邮件”按钮。\\n- [ ] 步骤2：在收件人栏输入企业邮箱地址，点击“发送”按钮前，检查邮件内容是否包含患者信息、内部通讯录或财务数据等敏感内容。\\n- [ ] 步骤3：如果发现敏感内容，使用脱敏打码（mask）或替换（replace）策略处理，确保内容合规后继续发送。\\n- [ ] 步骤4：确认邮件内容无敏感信息后，点击“发送”按钮完成操作。如果没有权限发送邮件，提示用户联系管理员。\\n\\n## 边界情况\\n- [特殊情况1]：操作超时，自动等待10秒，若仍未完成则中断操作并提示用户重试。\\n- [特殊情况2]：网络失败，尝试重新连接，若连接失败则提示用户检查网络并重试。\\n- [特殊情况3]：用户拒绝发送邮件，记录用户反馈并停止操作。",
+  "id": "demo_UserA_1774538604_send-wor",
+  "version": "v1.0.0"
+}

@@ -1,0 +1,22 @@
+{
+  "rule_id": "demo_UserC_1774538803_clock-in",
+  "user_id": "demo_UserC",
+  "scene": "在企业考勤系统中完成上下班打卡",
+  "sensitive_field": "打卡位置",
+  "model_sensitive_field": "Agent想做的操作内容",
+  "strategy": "mask",
+  "replacement": "[已脱敏]",
+  "rule_text": "保护打卡位置信息不被无关人员访问。",
+  "app_context_hint": "attendance",
+  "confidence": 0.8,
+  "needs_review": false,
+  "status": "active",
+  "created_ts": 1774538803,
+  "source_event_ids": [],
+  "app_context": "attendance",
+  "action": "send_message",
+  "field": "打卡位置",
+  "skill_body": "## 何时使用\\n在考勤系统的在企业考勤系统中完成上下班打卡时，该技能被触发。\\n\\n## 执行步骤\\n- [ ] 步骤1：打开考勤系统应用，点击“打卡”按钮进入打卡页面。\\n- [ ] 步骤2：选择当前打卡类型（上班或下班），确认打卡时间与地点信息，点击“确认打卡”提交。\\n- [ ] 步骤3：系统提示打卡成功后，返回主界面；若提示失败，根据错误信息重新操作或联系HR解决。\\n\\n## 边界情况\\n- [特殊情况1]：网络连接失败时，提示用户检查网络并重试。\\n- [特殊情况2]：用户拒绝授权位置信息时，系统无法记录准确打卡位置，需手动输入或联系HR处理。",
+  "id": "demo_UserC_1774538803_clock-in",
+  "version": "v1.0.0"
+}

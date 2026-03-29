@@ -1,0 +1,34 @@
+{
+  "app_context_hint": "dingtalk",
+  "app_context": "钉钉",
+  "scene": "在钉钉的工作群聊中发送一条消息",
+  "rule_text": "工作群消息仅限群内可见，不得转发至外部；消息内容不得包含未脱敏的客户信息",
+  "sensitive_field": "客户信息,财务数据,通讯录",
+  "strategy": "auto_mask",
+  "confidence": 0.92,
+  "created_ts": 1740500000,
+  "privacy_constraints": [
+    "发送前检测是否包含客户姓名、电话、地址等客户信息",
+    "财务相关数据（金额、账户）发送前需脱敏",
+    "转发至外部联系人前强制确认"
+  ],
+  "steps": [
+    {
+      "step_num": 1,
+      "title": "内容合规检查",
+      "action": "检查消息是否包含客户信息、财务数据、内部通讯录等敏感内容",
+      "has_privacy_protection": true
+    },
+    {
+      "step_num": 2,
+      "title": "脱敏处理",
+      "action": "如有敏感信息，建议使用代号或脱敏后内容",
+      "has_privacy_protection": true
+    },
+    {
+      "step_num": 3,
+      "title": "确认发送",
+      "action": "确认接收人范围正确后执行发送"
+    }
+  ]
+}

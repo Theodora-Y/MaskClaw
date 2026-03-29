@@ -1,0 +1,22 @@
+{
+  "rule_id": "demo_UserA_1774538613_dingtalk",
+  "user_id": "demo_UserA",
+  "scene": "在钉钉的工作群聊中发送一条消息",
+  "sensitive_field": "客户信息",
+  "model_sensitive_field": "Agent想做的操作内容",
+  "strategy": "mask",
+  "replacement": "[已脱敏]",
+  "rule_text": "工作群消息仅限群内可见，不得转发至外部；消息内容不得包含未脱敏的客户信息。",
+  "app_context_hint": "dingtalk",
+  "confidence": 0.85,
+  "needs_review": false,
+  "status": "active",
+  "created_ts": 1774538613,
+  "source_event_ids": [],
+  "app_context": "dingtalk",
+  "action": "send_message",
+  "field": "客户信息",
+  "skill_body": "## 何时使用\\n在钉钉的工作群聊中发送一条消息时，该技能被触发。\\n\\n## 执行步骤\\n- [ ] 步骤1：打开钉钉应用，进入工作群聊页面（点击钉钉图标 → 群聊列表 → 工作群聊）\\n- [ ] 步骤2：点击群聊输入框（位于聊天窗口底部）\\n- [ ] 步骤3：输入消息内容（确保内容不包含未脱敏的客户信息）\\n- [ ] 步骤4：点击发送按钮（输入框右侧的对勾图标）\\n\\n## 边界情况\\n- [特殊情况1]：操作超时（等待10秒后自动返回，重新尝试发送）\\n- [特殊情况2]：网络失败（提示网络错误，检查网络连接后重试）\\n- [特殊情况3]：用户拒绝发送（弹出权限提示时，选择允许或忽略，若忽略则记录并提醒用户开启权限后重试）",
+  "id": "demo_UserA_1774538613_dingtalk",
+  "version": "v1.0.0"
+}

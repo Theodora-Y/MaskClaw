@@ -1,0 +1,22 @@
+{
+  "rule_id": "demo_UserA_1774538623_his-pati",
+  "user_id": "demo_UserA",
+  "scene": "在医院HIS系统中录入或查询患者病历信息",
+  "sensitive_field": "",
+  "model_sensitive_field": "Agent想做的操作内容",
+  "strategy": "mask",
+  "replacement": "[已脱敏]",
+  "rule_text": "",
+  "app_context_hint": "his",
+  "confidence": 0.85,
+  "needs_review": false,
+  "status": "active",
+  "created_ts": 1774538623,
+  "source_event_ids": [],
+  "app_context": "his",
+  "action": "send_message",
+  "field": "",
+  "skill_body": "## 何时使用\\n在HIS系统的在医院HIS系统中录入或查询患者病历信息时，该技能被触发。\\n\\n## 执行步骤\\n- [ ] 步骤1：点击HIS系统登录界面，输入账号和密码，点击“登录”进入系统。\\n- [ ] 步骤2：在主界面找到“病历管理”模块，点击进入病历列表页面。\\n- [ ] 步骤3：选择“新增病历”或“查询病历”，根据操作输入患者ID或其他查询条件（如姓名、住院号），点击“查询”或“保存”。\\n- [ ] 步骤4：在病历详情页面，查看或编辑病历信息，确认无误后点击“提交”或“保存”完成操作。\\n- [ ] 步骤5：操作完成后，检查系统是否自动生成审计日志，记录操作时间、操作人、操作内容等信息。\\n\\n## 边界情况\\n- [特殊情况1]：如果操作超时（如网络延迟导致页面加载失败），AutoGLM应等待10秒后重试操作，若仍无法完成则提示用户手动刷新页面或联系管理员。\\n- [特殊情况2]：如果用户拒绝授权访问病历信息，AutoGLM应立即停止操作，提示用户需获得权限后方可继续，并记录拒绝原因至审计日志。",
+  "id": "demo_UserA_1774538623_his-pati",
+  "version": "v1.0.0"
+}

@@ -1,0 +1,22 @@
+{
+  "rule_id": "demo_UserA_1774538586_order-fo",
+  "user_id": "demo_UserA",
+  "scene": "在美团或饿了么上下单点外卖",
+  "sensitive_field": "收货地址, 联系电话",
+  "model_sensitive_field": "Agent想做的操作内容",
+  "strategy": "mask",
+  "replacement": "[已脱敏]",
+  "rule_text": "收货地址和电话仅用于配送，不得与工作内容混淆；外卖订单不含医疗标记。",
+  "app_context_hint": "food_delivery",
+  "confidence": 0.85,
+  "needs_review": false,
+  "status": "active",
+  "created_ts": 1774538586,
+  "source_event_ids": [],
+  "app_context": "food_delivery",
+  "action": "send_message",
+  "field": "收货地址, 联系电话",
+  "skill_body": "## 何时使用\\n在外卖平台的在美团或饿了么上下单点外卖时，该技能被触发。\\n\\n## 执行步骤\\n- [ ] 步骤1：打开美团或饿了么应用，点击“下单”或“点餐”按钮。\\n- [ ] 步骤2：选择餐厅和菜品，确认数量后点击“加入购物车”或“立即下单”。\\n- [ ] 步骤3：进入订单详情页，填写收货地址（如“北京市海淀区XX路XX号”），确保地址准确无误。\\n- [ ] 步骤4：输入联系电话（如“138XXXXXXX”），用于配送联系。\\n- [ ] 步骤5：核对订单信息，包括菜品、数量、地址和电话，确认无误后点击“提交订单”或“确认支付”。\\n- [ ] 步骤6：完成支付，等待订单生成成功提示。\\n\\n## 边界情况\\n- [特殊情况1]：操作超时（如网络不稳定导致页面加载失败，需重新尝试）。\\n- [特殊情况2]：用户拒绝支付（需询问用户是否需要重新选择支付方式或取消订单）。",
+  "id": "demo_UserA_1774538586_order-fo",
+  "version": "v1.0.0"
+}

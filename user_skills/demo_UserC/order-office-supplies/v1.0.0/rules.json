@@ -1,0 +1,22 @@
+{
+  "rule_id": "demo_UserC_1774538820_order-of",
+  "user_id": "demo_UserC",
+  "scene": "在企业采购平台订购办公耗材或设备",
+  "sensitive_field": "收货地址",
+  "model_sensitive_field": "Agent想做的操作内容",
+  "strategy": "mask",
+  "replacement": "[已脱敏]",
+  "rule_text": "确保采购信息真实、地址为公司地址，避免超规格采购。",
+  "app_context_hint": "procurement",
+  "confidence": 0.8,
+  "needs_review": false,
+  "status": "active",
+  "created_ts": 1774538820,
+  "source_event_ids": [],
+  "app_context": "procurement",
+  "action": "send_message",
+  "field": "收货地址",
+  "skill_body": "## 何时使用\\n在企业采购的在企业采购平台订购办公耗材或设备时，该技能被触发。\\n\\n## 执行步骤\\n- [ ] 步骤1：进入企业采购平台，点击“发起采购”按钮。\\n- [ ] 步骤2：选择“办公耗材/设备”类别，输入采购需求描述，确保内容真实准确。\\n- [ ] 步骤3：填写收货地址，选择公司地址作为默认收货地址，并确认无误。\\n- [ ] 步骤4：核对采购规格，确保符合公司标准，避免超规格采购。\\n- [ ] 步骤5：提交采购申请，等待审批通过后下单。\\n\\n## 边界情况\\n- [特殊情况1]：若用户操作超时，请提示用户重新登录并继续操作。\\n- [特殊情况2]：若网络连接失败，记录错误日志并提示用户检查网络状态后重试。",
+  "id": "demo_UserC_1774538820_order-of",
+  "version": "v1.0.0"
+}

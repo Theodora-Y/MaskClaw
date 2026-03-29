@@ -1,0 +1,22 @@
+{
+  "rule_id": "demo_UserC_1774538663_send-wor",
+  "user_id": "demo_UserC",
+  "scene": "使用企业邮箱发送一封工作邮件",
+  "sensitive_field": "患者信息、内部通讯录、财务数据",
+  "model_sensitive_field": "Agent想做的操作内容",
+  "strategy": "mask",
+  "replacement": "[已脱敏]",
+  "rule_text": "邮件内容不得包含未脱敏的患者信息、内部通讯录、财务数据等敏感内容。",
+  "app_context_hint": "email",
+  "confidence": 0.85,
+  "needs_review": false,
+  "status": "active",
+  "created_ts": 1774538663,
+  "source_event_ids": [],
+  "app_context": "email",
+  "action": "send_message",
+  "field": "患者信息、内部通讯录、财务数据",
+  "skill_body": "## 何时使用\\n在邮件的使用企业邮箱发送一封工作邮件时，该技能被触发。\\n\\n## 执行步骤\\n- [ ] 步骤1：打开邮件应用，点击“新建邮件”按钮。\\n- [ ] 步骤2：输入收件人地址（仅填写脱敏后的邮箱地址），点击“收件人”栏下方的“添加联系人”按钮，选择“企业通讯录”中的相关联系人，并确认已脱敏。\\n- [ ] 步骤3：在正文区域输入邮件内容，确保未包含患者信息、内部通讯录或财务数据等敏感内容，使用AutoGLM的脱敏功能对敏感词汇进行处理。\\n- [ ] 步骤4：点击“发送”按钮，确认邮件已成功发送到目标邮箱地址，且内容符合隐私要求。\\n\\n## 边界情况\\n- [特殊情况1]：如果邮件内容包含敏感信息，AutoGLM将自动提示用户进行内容审查，并建议使用mask或replace策略处理敏感字段。若用户拒绝修改，则执行block策略，阻止发送邮件。\\n- [特殊情况2]：网络连接失败或超时，AutoGLM将提示用户检查网络状态，若多次尝试仍失败，则执行deny策略，终止发送操作。",
+  "id": "demo_UserC_1774538663_send-wor",
+  "version": "v1.0.0"
+}

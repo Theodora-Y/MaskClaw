@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  # ── 主后端服务（API + 模型合一容器）────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: privacy-agent-backend
+    ports:
+      - "8001:8001"   # API 服务
+      - "8000:8000"   # 模型服务
+    environment:
+      - PRIVACY_AGENT_AUTH_SECRET=change-me-in-production
+    volumes:
+      # 持久化数据库和用户数据
+      - ./user_skills:/app/user_skills
+      - ./skill_registry:/app/skill_registry
+      - ./memory:/app/memory
+      - ./maskclaw.db:/app/maskclaw.db
+    restart: unless-stopped
+
+  # ── 前端开发服务（可选，生产环境建议 build 后 nginx 部署）──────
+  frontend:
+    image: node:20-alpine
+    container_name: privacy-agent-frontend
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/ui-app:/app
+    environment:
+      - VITE_API_BASE=http://localhost:8001
+    depends_on:
+      - backend
+    restart: unless-stopped

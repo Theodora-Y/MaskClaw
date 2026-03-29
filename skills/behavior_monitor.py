@@ -3,9 +3,13 @@
 This file is the runtime implementation used by the project code.
 It standardizes all events into the shared schema defined in log_schema.md.
 
-日志分为两类：
+日志分为两类（旧格式）：
 - behavior_log.jsonl: 用户未参与的操作（level=1）
 - correction_log.jsonl: 用户参与的操作（level=2）
+
+新版格式（v2.0）：
+- session_trace.jsonl: 结构化行为链，包含同一任务的所有动作
+  使用 _scenario_tag 作为行为链的唯一识别标志
 """
 
 import json
@@ -13,6 +17,7 @@ import os
 import threading
 import time
 import uuid
+from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -162,8 +167,19 @@ def log_event(
     pii_types_involved: Optional[List[str]] = None,
     base_dir: str = "memory/logs",
     expire_seconds: Optional[int] = None,
+    # v2.0 新增参数
+    scenario_tag: Optional[str] = None,
+    rule_type: str = "N",
+    relationship_tag: Optional[str] = None,
+    agent_intent: Optional[str] = None,
+    quality_score: Optional[float] = None,
+    quality_flag: Optional[str] = None,
 ) -> str:
-    """核心日志记录接口。
+    """核心日志记录接口 (v2.0 - 支持双写)。
+
+    写入位置：
+    1. 旧格式: behavior_log.jsonl / correction_log.jsonl (兼容)
+    2. 新格式: session_trace.jsonl (结构化行为链)
 
     Args:
         user_id: 用户标识
@@ -178,6 +194,13 @@ def log_event(
         pii_types_involved: 涉及的 PII 类型列表
         base_dir: 日志根目录
         expire_seconds: 自定义过期秒数（默认根据 resolution 自动选择）
+        # v2.0 新增参数
+        scenario_tag: 场景标签，用于行为链归一化（必填）
+        rule_type: 规则类型 (H/S/N)
+        relationship_tag: 关系标签
+        agent_intent: Agent意图描述
+        quality_score: 质量评分
+        quality_flag: 质量标志
 
     Returns:
         event_id: 生成的唯一事件ID
@@ -208,6 +231,7 @@ def log_event(
         "expire_ts": expire_ts,
     }
 
+    # 旧格式兼容字段（双写）
     logger = UserLogger(user_id=user_id, base_dir=base_dir)
 
     # 根据 resolution 决定写入哪些文件
@@ -218,6 +242,39 @@ def log_event(
         # level=2: 同时写 behavior_log 和 correction_log
         logger.write_behavior_log(record)
         logger.write_correction_log(record)
+
+    # ========== v2.0 双写: session_trace.jsonl ==========
+    if scenario_tag:
+        # 将 meta 信息传递给行为链记录器
+        meta_fields = {
+            "_rule_type": rule_type,
+            "_pii_type": "|".join(pii_types_involved) if pii_types_involved else None,
+            "_relationship_tag": relationship_tag,
+            "_agent_intent": agent_intent,
+            "_quality_score": quality_score,
+            "_quality_flag": quality_flag,
+        }
+        meta_fields = {k: v for k, v in meta_fields.items() if v is not None}
+
+        log_action_to_chain(
+            user_id=user_id,
+            action=action,
+            resolution=resolution,
+            scenario_tag=scenario_tag,
+            app_context=app_context,
+            field=field,
+            value_preview=value_preview,
+            correction_type=correction_type,
+            correction_value=correction_value,
+            rule_type=rule_type,
+            pii_type=meta_fields.get("_pii_type"),
+            relationship_tag=relationship_tag,
+            agent_intent=agent_intent,
+            quality_score=quality_score,
+            quality_flag=quality_flag,
+            base_dir=base_dir,
+            auto_flush=(correction_type is not None),
+        )
 
     return event_id
 
@@ -246,6 +303,298 @@ class SessionLogger:
         with self._lock:
             with self.log_file.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+# ============== v2.0 结构化行为链日志 ==============
+
+class TraceChainCache:
+    """内存中的行为链缓存，按 user_id -> scenario_tag -> chain 分层管理。"""
+
+    def __init__(self):
+        # 结构: {user_id: {scenario_tag: chain_dict}}
+        self._cache: Dict[str, Dict[str, Dict[str, Any]]] = defaultdict(dict)
+        self._lock = threading.Lock()
+
+    def get_or_create_chain(
+        self,
+        user_id: str,
+        scenario_tag: str,
+        app_context: str,
+        rule_type: str,
+    ) -> Dict[str, Any]:
+        """获取或创建一条行为链。"""
+        with self._lock:
+            if scenario_tag not in self._cache[user_id]:
+                chain_id = f"{user_id}_{scenario_tag}_{int(time.time())}"
+                chain = {
+                    "chain_id": chain_id,
+                    "user_id": user_id,
+                    "app_context": app_context,
+                    "scenario_tag": scenario_tag,
+                    "rule_type": rule_type or "N",
+                    "start_ts": int(time.time()),
+                    "end_ts": int(time.time()),
+                    "action_count": 0,
+                    "has_correction": False,
+                    "correction_count": 0,
+                    "final_resolution": "unknown",
+                    "processed": False,
+                    "actions": [],
+                }
+                self._cache[user_id][scenario_tag] = chain
+            return self._cache[user_id][scenario_tag]
+
+    def add_action(
+        self,
+        user_id: str,
+        scenario_tag: str,
+        action_data: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """向行为链添加一个动作。"""
+        app_context = action_data.get("app_context", "unknown")
+        rule_type = action_data.get("_rule_type", "N")
+
+        chain = self.get_or_create_chain(user_id, scenario_tag, app_context, rule_type)
+
+        with self._lock:
+            action_index = chain["action_count"]
+            is_correction = action_data.get("correction_type") not in (None, "")
+
+            action_record = {
+                "action_index": action_index,
+                "ts": action_data.get("ts", int(time.time())),
+                "action": action_data.get("action", "unknown"),
+                "field": action_data.get("field"),
+                "resolution": action_data.get("resolution", "unknown"),
+                "value_preview": action_data.get("value_preview"),
+                "is_correction": is_correction,
+                "correction_type": action_data.get("correction_type"),
+                "correction_value": action_data.get("correction_value"),
+                "pii_type": action_data.get("_pii_type"),
+                "relationship_tag": action_data.get("_relationship_tag"),
+                "agent_intent": action_data.get("_agent_intent"),
+                "quality_score": action_data.get("_quality_score"),
+                "quality_flag": action_data.get("_quality_flag"),
+            }
+
+            # 只保留非 None 的字段
+            action_record = {k: v for k, v in action_record.items() if v is not None}
+
+            chain["actions"].append(action_record)
+            chain["action_count"] += 1
+            chain["end_ts"] = action_record["ts"]
+            chain["final_resolution"] = action_record["resolution"]
+
+            if is_correction:
+                chain["has_correction"] = True
+                chain["correction_count"] += 1
+
+            return chain
+
+    def get_all_chains(self, user_id: str) -> List[Dict[str, Any]]:
+        """获取用户的所有行为链。"""
+        with self._lock:
+            return list(self._cache.get(user_id, {}).values())
+
+    def get_chain(self, user_id: str, scenario_tag: str) -> Optional[Dict[str, Any]]:
+        """获取指定的行为链。"""
+        with self._lock:
+            return self._cache.get(user_id, {}).get(scenario_tag)
+
+    def flush_chain(self, user_id: str, scenario_tag: str) -> Optional[Dict[str, Any]]:
+        """将行为链从缓存移除并返回（用于持久化）。"""
+        with self._lock:
+            chain = self._cache.get(user_id, {}).pop(scenario_tag, None)
+            return chain
+
+
+# 全局行为链缓存实例
+_trace_chain_cache = TraceChainCache()
+
+
+class TraceChainLogger:
+    """v2.0 结构化行为链日志记录器。"""
+
+    def __init__(self, user_id: str, base_dir: str = "memory/logs"):
+        self.user_id = user_id
+        self.base_dir = Path(base_dir)
+        self.user_dir = self.base_dir / user_id
+        self.trace_file = self.user_dir / "session_trace.jsonl"
+        self._lock = threading.Lock()
+
+    def _ensure_dir(self) -> None:
+        self.user_dir.mkdir(parents=True, exist_ok=True)
+
+    def write_chain(self, chain: Dict[str, Any]) -> None:
+        """持久化一条行为链到 session_trace.jsonl。"""
+        self._ensure_dir()
+        with self._lock:
+            with self.trace_file.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(chain, ensure_ascii=False) + "\n")
+
+    def read_chains(self, limit: int = 100, unprocessed_only: bool = False) -> List[Dict[str, Any]]:
+        """读取行为链日志。"""
+        if not self.trace_file.exists():
+            return []
+
+        chains = []
+        with self._lock:
+            with self.trace_file.open("r", encoding="utf-8") as f:
+                lines = f.readlines()
+                for line in lines[-limit:]:
+                    if line.strip():
+                        try:
+                            chain = json.loads(line)
+                            if unprocessed_only and chain.get("processed"):
+                                continue
+                            chains.append(chain)
+                        except json.JSONDecodeError:
+                            continue
+        return chains
+
+    def mark_processed(self, chain_id: str) -> bool:
+        """标记行为链已处理。"""
+        if not self.trace_file.exists():
+            return False
+
+        updated_lines = []
+        found = False
+        with self._lock:
+            with self.trace_file.open("r", encoding="utf-8") as f:
+                lines = f.readlines()
+
+            for line in lines:
+                if line.strip():
+                    try:
+                        chain = json.loads(line)
+                        if chain.get("chain_id") == chain_id:
+                            chain["processed"] = True
+                            found = True
+                        updated_lines.append(json.dumps(chain, ensure_ascii=False) + "\n")
+                    except json.JSONDecodeError:
+                        updated_lines.append(line)
+
+            if found:
+                with self.trace_file.open("w", encoding="utf-8") as f:
+                    f.writelines(updated_lines)
+
+        return found
+
+
+def log_action_to_chain(
+    user_id: str,
+    action: str,
+    resolution: str,
+    scenario_tag: str,
+    app_context: str,
+    field: Optional[str] = None,
+    value_preview: Optional[str] = None,
+    correction_type: Optional[str] = None,
+    correction_value: Optional[str] = None,
+    rule_type: str = "N",
+    pii_type: Optional[str] = None,
+    relationship_tag: Optional[str] = None,
+    agent_intent: Optional[str] = None,
+    quality_score: Optional[float] = None,
+    quality_flag: Optional[str] = None,
+    base_dir: str = "memory/logs",
+    auto_flush: bool = False,
+) -> Dict[str, Any]:
+    """v2.0 核心日志记录接口 - 写入结构化行为链。
+
+    Args:
+        user_id: 用户标识
+        action: 操作类型
+        resolution: 决策结果 (allow/block/mask/ask/interrupt)
+        scenario_tag: 场景标签，作为行为链的唯一识别标志
+        app_context: 应用上下文
+        field: 字段名
+        value_preview: 脱敏后的预览值
+        correction_type: 纠错类型 (user_denied/user_modified/user_interrupted)
+        correction_value: 用户修正后的替代值
+        rule_type: 规则类型 (H/S/N)
+        pii_type: PII类型
+        relationship_tag: 关系标签
+        agent_intent: Agent意图描述
+        quality_score: 质量评分
+        quality_flag: 质量标志
+        base_dir: 日志根目录
+        auto_flush: 是否在纠错后自动持久化
+
+    Returns:
+        更新后的行为链
+    """
+    ts = int(time.time())
+
+    action_data = {
+        "ts": ts,
+        "action": action,
+        "resolution": resolution,
+        "field": field,
+        "value_preview": value_preview,
+        "correction_type": correction_type,
+        "correction_value": correction_value,
+        "_rule_type": rule_type,
+        "_pii_type": pii_type,
+        "_relationship_tag": relationship_tag,
+        "_agent_intent": agent_intent,
+        "_quality_score": quality_score,
+        "_quality_flag": quality_flag,
+        "app_context": app_context,
+    }
+
+    # 添加到内存缓存
+    chain = _trace_chain_cache.add_action(user_id, scenario_tag, action_data)
+
+    # 如果是纠错动作，自动持久化
+    if auto_flush and correction_type:
+        flush_and_save_chain(user_id, scenario_tag, base_dir)
+
+    return chain
+
+
+def flush_and_save_chain(user_id: str, scenario_tag: str, base_dir: str = "memory/logs") -> Optional[Dict[str, Any]]:
+    """将行为链从缓存持久化到磁盘。"""
+    chain = _trace_chain_cache.flush_chain(user_id, scenario_tag)
+    if chain:
+        logger = TraceChainLogger(user_id, base_dir)
+        logger.write_chain(chain)
+    return chain
+
+
+def flush_all_user_chains(user_id: str, base_dir: str = "memory/logs") -> int:
+    """将用户所有未持久化的行为链持久化到磁盘。"""
+    chains = _trace_chain_cache.get_all_chains(user_id)
+    count = 0
+    for chain in chains:
+        scenario_tag = chain.get("scenario_tag", "")
+        if scenario_tag:
+            flush_and_save_chain(user_id, scenario_tag, base_dir)
+            count += 1
+    return count
+
+
+def get_pending_chains(user_id: str, base_dir: str = "memory/logs") -> List[Dict[str, Any]]:
+    """获取用户未处理的行为链（从缓存和磁盘）。"""
+    chains = []
+
+    # 从缓存获取
+    chains.extend(_trace_chain_cache.get_all_chains(user_id))
+
+    # 从磁盘获取未处理的
+    logger = TraceChainLogger(user_id, base_dir)
+    chains.extend(logger.read_chains(unprocessed_only=True))
+
+    # 去重（基于 chain_id）
+    seen = set()
+    unique_chains = []
+    for chain in chains:
+        cid = chain.get("chain_id")
+        if cid and cid not in seen:
+            seen.add(cid)
+            unique_chains.append(chain)
+
+    return unique_chains
 
 
 class BehaviorMonitor:
@@ -338,13 +687,97 @@ class BehaviorMonitor:
 
 
 if __name__ == "__main__":
-    # 测试新的 log_event 接口
     import warnings
     warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-    print("=== 测试 log_event ===\n")
+    print("=" * 60)
+    print("测试 v2.0 结构化行为链日志")
+    print("=" * 60)
 
-    # 测试1: 用户未参与的 allow 操作
+    # 测试1: 使用新接口 log_action_to_chain
+    print("\n=== 测试 log_action_to_chain (v2.0) ===\n")
+
+    # 模拟一个行为链：Agent 尝试分享病历，用户拒绝
+    chain_1 = log_action_to_chain(
+        user_id="test_user_v2",
+        action="share_or_send",
+        resolution="block",
+        scenario_tag="钉钉发送病历截图给同事",
+        app_context="钉钉",
+        field="medical_record",
+        value_preview="screenshot.png",
+        rule_type="H",
+        pii_type="MedicalRecord",
+        relationship_tag="同科室同事",
+        agent_intent="发送病历截图到钉钉对话",
+        quality_score=3.6,
+        quality_flag="pass",
+        base_dir="memory/logs",
+        auto_flush=False,  # 先累积动作，最后再持久化
+    )
+    print(f"1. 添加动作到链: {chain_1['chain_id']}, action_count={chain_1['action_count']}")
+
+    # 同一场景的第二次尝试（模拟 UI 更新后）
+    chain_2 = log_action_to_chain(
+        user_id="test_user_v2",
+        action="share_or_send",
+        resolution="block",
+        scenario_tag="钉钉发送病历截图给同事",
+        app_context="钉钉",
+        field="medical_record",
+        value_preview="screenshot.png",
+        rule_type="H",
+        pii_type="MedicalRecord",
+        relationship_tag="同科室同事",
+        agent_intent="新版钉钉UI结构调整后发送病历截图",
+        quality_score=3.6,
+        quality_flag="pass",
+        base_dir="memory/logs",
+        auto_flush=False,
+    )
+    print(f"2. 添加动作到链: {chain_2['chain_id']}, action_count={chain_2['action_count']}")
+
+    # 用户纠错动作 - 会触发 auto_flush
+    chain_3 = log_action_to_chain(
+        user_id="test_user_v2",
+        action="share_or_send",
+        resolution="correction",
+        scenario_tag="钉钉发送病历截图给同事",
+        app_context="钉钉",
+        field="medical_record",
+        value_preview="screenshot.png",
+        correction_type="user_denied",
+        correction_value=None,
+        rule_type="H",
+        pii_type="MedicalRecord",
+        relationship_tag="同科室同事",
+        agent_intent="发送病历截图到钉钉对话",
+        quality_score=3.6,
+        quality_flag="pass",
+        base_dir="memory/logs",
+        auto_flush=True,  # 纠错后自动持久化
+    )
+    print(f"3. 纠错动作 (auto_flush): {chain_3['chain_id']}")
+    print(f"   has_correction={chain_3['has_correction']}, correction_count={chain_3['correction_count']}")
+
+    # 验证 session_trace.jsonl
+    trace_logger = TraceChainLogger("test_user_v2", base_dir="memory/logs")
+    print("\n=== session_trace.jsonl 内容 ===")
+    for chain in trace_logger.read_chains(limit=10):
+        print(f"\nchain_id: {chain['chain_id']}")
+        print(f"  scenario_tag: {chain['scenario_tag']}")
+        print(f"  action_count: {chain['action_count']}")
+        print(f"  has_correction: {chain['has_correction']}")
+        print(f"  actions:")
+        for act in chain.get("actions", []):
+            print(f"    - [{act['action_index']}] ts={act['ts']}, action={act['action']}, "
+                  f"resolution={act['resolution']}, is_correction={act['is_correction']}")
+
+    # 测试2: 使用旧的 log_event (双写)
+    print("\n" + "=" * 60)
+    print("=== 测试 log_event (双写模式) ===")
+    print("=" * 60 + "\n")
+
     event_id_1 = log_event(
         user_id="win_user_001",
         app_context="taobao",
@@ -355,10 +788,13 @@ if __name__ == "__main__":
         value_preview="北京市海淀区xx路",
         pii_types_involved=["address"],
         base_dir="memory/logs",
+        scenario_tag="淘宝填写收货地址",
+        rule_type="S",
+        relationship_tag="本人",
+        agent_intent="自动填充家庭地址",
     )
     print(f"1. allow 操作 (level=1): {event_id_1}")
 
-    # 测试2: 用户参与的 ask 操作
     event_id_2 = log_event(
         user_id="win_user_001",
         app_context="taobao",
@@ -369,10 +805,13 @@ if __name__ == "__main__":
         value_preview="138****1234",
         pii_types_involved=["phone"],
         base_dir="memory/logs",
+        scenario_tag="淘宝填写联系方式",
+        rule_type="H",
+        relationship_tag="本人",
+        agent_intent="自动填充手机号",
     )
     print(f"2. ask 操作 (level=2): {event_id_2}")
 
-    # 测试3: 用户修正了操作
     event_id_3 = log_event(
         user_id="win_user_001",
         app_context="taobao",
@@ -385,17 +824,28 @@ if __name__ == "__main__":
         correction_value="公司电话",
         pii_types_involved=["phone"],
         base_dir="memory/logs",
+        scenario_tag="淘宝填写联系方式",
+        rule_type="H",
+        relationship_tag="本人",
+        agent_intent="自动填充手机号",
     )
     print(f"3. user_modified: {event_id_3}")
 
-    # 验证写入的文件
+    # 验证旧格式文件
     logger = UserLogger("win_user_001", base_dir="memory/logs")
-    print("\n=== behavior_log.jsonl ===")
-    for r in logger.read_behavior_logs(limit=10):
+    print("\n=== behavior_log.jsonl (最后3条) ===")
+    for r in logger.read_behavior_logs(limit=3):
         print(json.dumps(r, ensure_ascii=False))
 
-    print("\n=== correction_log.jsonl ===")
-    for r in logger.read_correction_logs(limit=10):
+    print("\n=== correction_log.jsonl (最后3条) ===")
+    for r in logger.read_correction_logs(limit=3):
         print(json.dumps(r, ensure_ascii=False))
 
-    print("\n测试完成!")
+    print("\n=== session_trace.jsonl (淘宝相关) ===")
+    for chain in trace_logger.read_chains(limit=10):
+        if "淘宝" in chain.get("scenario_tag", ""):
+            print(json.dumps(chain, ensure_ascii=False, indent=2))
+
+    print("\n" + "=" * 60)
+    print("测试完成!")
+    print("=" * 60)

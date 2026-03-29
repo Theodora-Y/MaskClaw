@@ -5,8 +5,9 @@ import os
 import subprocess
 import tempfile
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from io import BytesIO
+from typing import Any
 
 from PIL import Image
 
@@ -19,6 +20,7 @@ class Screenshot:
     width: int
     height: int
     is_sensitive: bool = False
+    privacy_metadata: dict[str, Any] = field(default_factory=dict)
 
 
 def get_screenshot(
