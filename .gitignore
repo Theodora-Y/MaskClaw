@@ -1,13 +1,69 @@
-# 忽略模型文件（最占用空间，绝对不传）
+# MaskClaw .gitignore
+
+# ========================
+# 大型模型文件 (绝对不传)
+# ========================
 models/
-model_server/minicpm_o/ 
+model_server/minicpm_o/
 Open-AutoGLM-main/
-P-GUI-Evo-chainlogs/
+
+# ========================
+# 运行时数据 (每次运行生成)
+# ========================
+memory/logs/
+memory/chroma_storage/
+model_server/memory/
+config/
+temp/
+skill_registry/skill_registry.db
+skill_registry/skill_registry.db.lock
+
+# ========================
+# 前端 (独立部署)
+# ========================
 frontend/
-档案.md
+
+# ========================
+# 评测数据集 (可选,含实验日志)
+# ========================
+P-GUI-Evo-chainlogs/
+
+# ========================
+# 开发调试文件
+# ========================
 test_evolution_demo.py
 test_mock_publish.py
 test_telemetry.py
 api_server.log
 demo.py
 run_with_privacy.sh
+maskclaw.db
+preset_demo_accounts.sql
+档案.md
+
+# ========================
+# Python
+# ========================
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# ========================
+# IDE / OS
+# ========================
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*.swo
+
+# ========================
+# Logs
+# ========================
+*.log
+docker-compose.yml
+maskclaw.db
+preset_demo_accounts.sql

@@ -2,9 +2,9 @@
   <img src="docs/assets.md/logo_4x.png" width="80%" alt="MaskClaw Logo" />
 </p>
 
-<h1 align="center">MaskClaw</h1>
-
 <p align="center">A Self-Evolving Privacy Protection Framework via On-Device Rule Extraction</p>
+
+<p align="center">[简体中文](README.md) | [English](README_EN.md)</p>
 
 <p align="center">
   <a href="https://www.python.org/">

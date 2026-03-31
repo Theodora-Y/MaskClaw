@@ -2,9 +2,10 @@
   <img src="docs/assets.md/logo_4x.png" width="80%" alt="MaskClaw Logo" />
 </p>
 
-<h1 align="center">MaskClaw</h1>
 
 <p align="center">基于端侧模型自进化规则抽取的个性化隐私保护框架</p>
+
+<p align="center">[简体中文](README.md) | [English](README_EN.md)</p>
 
 <p align="center">
   <a href="https://www.python.org/">
@@ -30,6 +31,10 @@
 <p align="center">
   <strong>端侧隐私守卫</strong> | <strong>自进化规则引擎</strong> | <strong>人机协作确认</strong>
 </p>
+
+---
+
+[简体中文](README.md) | [English](README_EN.md)
 
 ---
 
@@ -313,40 +318,70 @@ MaskClaw 提供简洁直观的 Web 界面，实时展示隐私保护状态与操
 ```
 MaskClaw/
 ├── api_server.py                 # FastAPI HTTP 服务 (端口 8001)
+├── auth_router.py                # 认证路由模块
+├── evolution_daemon.py           # 进化守护进程
+├── notifications_router.py       # 通知路由模块
+├── proxy_agent.py                # 代理 Agent 核心逻辑
+├── requirements.txt              # Python 依赖列表
+├── docker-compose.yml            # Docker 容器编排
+├── Dockerfile                    # Docker 镜像构建
+├── STARTUP.md                    # 启动说明文档
+├── AGENTS.md                     # Agent 行为约束文档
 │
-├── model_server/
+├── docs/                         # 文档目录
+│   ├── ARCHITECTURE.md           # 系统架构文档
+│   ├── SKILLS_API.md             # Skills API 文档
+│   ├── RAG_SCHEMA.md             # RAG 数据模式
+│   ├── PROMPT_TEMPLATES.md       # Prompt 模板文档
+│   ├── SESSION_TRACE_FORMAT.md   # 会话轨迹格式
+│   └── self_evolution_mechanism.md # 自进化机制文档
+│   
+│
+├── model_server/                 # 模型服务
 │   ├── minicpm_api.py            # MiniCPM-V 视觉模型 API (端口 8000)
-│   └── requirements.txt          # 模型服务依赖
+│   ├── requirements.txt          # 模型服务依赖
+│   └── memory/chroma_storage/   # ChromaDB 数据 (运行时生成)
 │
-├── frontend/
-│   └── ui-app/                   # React 前端应用
+├── memory/                        # 记忆存储
+│   ├── chroma_manager.py        # ChromaDB 管理器
+│   ├── rag_client.py            # RAG 检索客户端
+│   ├── log_processor.py         # 日志处理器
+│   └── chat_history_db.py       # 聊天历史存储
 │
-├── models/                       # 模型文件目录
-│
-├── skills/                       # Skills 模块
-│   ├── smart_masker.py           # 🎭 视觉打码模块
+├── skills/                        # 系统内置 Skills (平台级能力)
+│   ├── smart_masker.py          # 🎭 视觉打码模块
 │   ├── behavior_monitor.py       # 📊 行为监控模块
-│   └── evolution_mechanic.py     # 🧬 自进化机制
+│   └── evolution_mechanic.py    # 🧬 自进化机制
 │
-├── memory/                       # 记忆存储
-│   ├── chroma_manager.py         # ChromaDB 管理器
-│   └── chroma_storage/           # ChromaDB 数据库文件
+├── sandbox/                       # 沙盒测试
+│   ├── sandbox_validator.py     # 沙盒验证器
+│   ├── semantic_evaluator.py    # 语义评估器
+│   └── checklist_evaluator.py   # 检查清单评估器
 │
-├── prompts/                      # Prompt 模板
+├── prompts/                       # Prompt 模板
+│   ├── evolution_rule_extract.txt
+│   ├── evolution_skill_writing.txt
+│   ├── privacy_analysis.txt
+│   ├── relevance_assessment.txt
+│   └── retrieval_decision.txt
 │
-├── docs/                        # 架构文档
-│   ├── ARCHITECTURE.md          # 系统架构文档
-│   ├── SKILLS_API.md           # Skills API 文档
-│   ├── RAG_SCHEMA.md           # RAG 数据模式
-│   └── PROMPT_TEMPLATES.md     # Prompt 模板文档
+├── scripts/                       # 辅助脚本
+│   ├── generate_skills.py       # 生成 Skills
+│   ├── migrate_logs_to_chains.py
+│   ├── seed_notifications.py    # 初始化通知数据
+│   ├── seed_skills_db.py        # 初始化 Skills 数据库
+│   └── split_traces.py
 │
-├── sandbox/                     # 沙盒测试目录
+├── skill_registry/               # Skills 注册表
+│   ├── __init__.py
+│   └── skill_db.py              # Skills 数据库管理
 │
-├── autoglm_server.py            # Windows 端 AutoGLM 服务
-├── demo.py                      # API 测试演示脚本
-├── requirements.txt             # Python 依赖列表
-├── README.md                   # 本文件
-└── AGENTS.md                   # Agent 行为约束文档
+├── user_skills/                  # 用户个性化 Skills (L3 Evolution 生成)
+│ 
+│
+└── windows_sdk/                   # Windows SDK (AutoGLM 集成)
+
+
 ```
 
 ---
