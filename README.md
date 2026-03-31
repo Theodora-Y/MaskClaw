@@ -1,17 +1,35 @@
-# MaskClaw
+<p align="center">
+  <img src="docs/assets.md/logo_4x.png" width="80%" alt="MaskClaw Logo" />
+</p>
 
-### 基于端侧模型自进化规则抽取的个性化隐私保护框架
+<h1 align="center">MaskClaw</h1>
 
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![MiniCPM](https://img.shields.io/badge/MiniCPM-V_4.5-FF6B6B?style=flat-square)]()
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![ChromaDB](https://img.shields.io/badge/ChromaDB-RAG-8b5cf6?style=flat-square)]()
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)]()
-[![Privacy](https://img.shields.io/badge/Privacy-端侧处理-10B981?style=flat-square)]()
+<p align="center">基于端侧模型自进化规则抽取的个性化隐私保护框架</p>
 
----
+<p align="center">
+  <a href="https://www.python.org/">
+    <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
+  </a>
+  <a href="#">
+    <img src="https://img.shields.io/badge/MiniCPM-V_4.5-FF6B6B?style=flat-square" alt="MiniCPM" />
+  </a>
+  <a href="https://fastapi.tiangolo.com/">
+    <img src="https://img.shields.io/badge/FastAPI-0.109-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
+  </a>
+  <a href="#">
+    <img src="https://img.shields.io/badge/ChromaDB-RAG-8b5cf6?style=flat-square" alt="ChromaDB" />
+  </a>
+  <a href="#">
+    <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License" />
+  </a>
+  <a href="#">
+    <img src="https://img.shields.io/badge/Privacy-端侧处理-10B981?style=flat-square" alt="Privacy" />
+  </a>
+</p>
 
-**端侧隐私守卫** | **自进化规则引擎** | **人机协作确认**
+<p align="center">
+  <strong>端侧隐私守卫</strong> | <strong>自进化规则引擎</strong> | <strong>人机协作确认</strong>
+</p>
 
 ---
 
