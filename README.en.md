@@ -241,23 +241,36 @@ The system has clear confidence level classification for its judgments, with dif
 MaskClaw provides a clean and intuitive web interface for real-time privacy protection status and operation records.
 
 <div align="center">
-
-### 🚀 Send Commands
-
-![Send Commands](docs/assets.md/发送命令.gif)
-
-### 🎭 Masking Display
-
-![Masking Display](docs/assets.md/打码显示.gif)
-
-### 🔔 Notification Alerts
-
-![Notification Alerts](docs/assets.md/通知.gif)
-
-### 🧬 Skill List Management
-
-![Skill List Management](docs/assets.md/skill列表.gif)
-
+  <table width="100%" align="center" style="width:100%; table-layout:fixed; border-collapse:separate; border-spacing:8px;">
+    <tr>
+      <td align="center" width="50%" bgcolor="#E8F0FE" style="border-radius:10px; padding:0; overflow:hidden;">
+        <div style="background-color:#0A66C2; padding:14px 8px; border-radius:10px 10px 0 0;">
+          <b style="color:#FFFFFF; font-size:18px; font-family:Arial, sans-serif;">🚀 Send Commands</b>
+        </div>
+        <img src="docs/assets.md/发送命令.gif" alt="Send Commands" width="100%" style="display:block;"/>
+      </td>
+      <td align="center" width="50%" bgcolor="#EEF2FF" style="border-radius:10px; padding:0; overflow:hidden;">
+        <div style="background-color:#6366F1; padding:14px 8px; border-radius:10px 10px 0 0;">
+          <b style="color:#FFFFFF; font-size:18px; font-family:Arial, sans-serif;">🎭 Masking Display</b>
+        </div>
+        <img src="docs/assets.md/打码显示.gif" alt="Masking Display" width="100%" style="display:block;"/>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" width="50%" bgcolor="#FEF3C7" style="border-radius:10px; padding:0; overflow:hidden;">
+        <div style="background-color:#F59E0B; padding:14px 8px; border-radius:10px 10px 0 0;">
+          <b style="color:#FFFFFF; font-size:18px; font-family:Arial, sans-serif;">🔔 Notification Alerts</b>
+        </div>
+        <img src="docs/assets.md/通知.gif" alt="Notification Alerts" width="100%" style="display:block;"/>
+      </td>
+      <td align="center" width="50%" bgcolor="#D1FAE5" style="border-radius:10px; padding:0; overflow:hidden;">
+        <div style="background-color:#10B981; padding:14px 8px; border-radius:10px 10px 0 0;">
+          <b style="color:#FFFFFF; font-size:18px; font-family:Arial, sans-serif;">🧬 Skill List Management</b>
+        </div>
+        <img src="docs/assets.md/skill列表.gif" alt="Skill List Management" width="100%" style="display:block;"/>
+      </td>
+    </tr>
+  </table>
 </div>
 
 ---

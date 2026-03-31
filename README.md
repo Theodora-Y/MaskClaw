@@ -241,23 +241,36 @@ MaskClaw 在不改动 AutoGLM、OpenClaw 等第三方 Agent 任何代码的前�
 MaskClaw 提供简洁直观的 Web 界面，实时展示隐私保护状态与操作记录。
 
 <div align="center">
-
-### 🚀 发送命令
-
-![发送命令](docs/assets.md/发送命令.gif)
-
-### 🎭 打码显示
-
-![打码显示](docs/assets.md/打码显示.gif)
-
-### 🔔 通知提醒
-
-![通知提醒](docs/assets.md/通知.gif)
-
-### 🧬 Skill 列表管理
-
-![Skill 列表管理](docs/assets.md/skill列表.gif)
-
+  <table width="100%" align="center" style="width:100%; table-layout:fixed; border-collapse:separate; border-spacing:8px;">
+    <tr>
+      <td align="center" width="50%" bgcolor="#E8F0FE" style="border-radius:10px; padding:0; overflow:hidden;">
+        <div style="background-color:#0A66C2; padding:14px 8px; border-radius:10px 10px 0 0;">
+          <b style="color:#FFFFFF; font-size:18px; font-family:Microsoft YaHei, PingFang SC, Arial, sans-serif;">🚀 发送命令</b>
+        </div>
+        <img src="docs/assets.md/发送命令.gif" alt="发送命令" width="100%" style="display:block;"/>
+      </td>
+      <td align="center" width="50%" bgcolor="#EEF2FF" style="border-radius:10px; padding:0; overflow:hidden;">
+        <div style="background-color:#6366F1; padding:14px 8px; border-radius:10px 10px 0 0;">
+          <b style="color:#FFFFFF; font-size:18px; font-family:Microsoft YaHei, PingFang SC, Arial, sans-serif;">🎭 打码显示</b>
+        </div>
+        <img src="docs/assets.md/打码显示.gif" alt="打码显示" width="100%" style="display:block;"/>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" width="50%" bgcolor="#FEF3C7" style="border-radius:10px; padding:0; overflow:hidden;">
+        <div style="background-color:#F59E0B; padding:14px 8px; border-radius:10px 10px 0 0;">
+          <b style="color:#FFFFFF; font-size:18px; font-family:Microsoft YaHei, PingFang SC, Arial, sans-serif;">🔔 通知提醒</b>
+        </div>
+        <img src="docs/assets.md/通知.gif" alt="通知提醒" width="100%" style="display:block;"/>
+      </td>
+      <td align="center" width="50%" bgcolor="#D1FAE5" style="border-radius:10px; padding:0; overflow:hidden;">
+        <div style="background-color:#10B981; padding:14px 8px; border-radius:10px 10px 0 0;">
+          <b style="color:#FFFFFF; font-size:18px; font-family:Microsoft YaHei, PingFang SC, Arial, sans-serif;">🧬 Skill 列表管理</b>
+        </div>
+        <img src="docs/assets.md/skill列表.gif" alt="Skill 列表管理" width="100%" style="display:block;"/>
+      </td>
+    </tr>
+  </table>
 </div>
 
 ---
