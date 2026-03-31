@@ -299,14 +299,14 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
 
 <h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Comparison with Alternatives</h2>
 
-| Dimension | MaskClaw | Google DLP | Microsoft Presidio | Cloud LLM Audit |
-|:---|:---:|:---:|:---:|:---:|
-| **Context Awareness** | ✅ Multi-condition combined judgment | ❌ Format matching | ❌ Format matching | ⚠️ Semantic understanding but requires cloud upload |
-| **Personalized Rules** | ✅ Automatic extraction and continuous evolution | ❌ Static rule base | ❌ Static rule base | ❌ No memory |
-| **Data Never Leaves Edge** | ✅ **Fully on-device** | ❌ Requires internet | ✅ Local deployment possible | ❌ Must upload screenshots |
-| **Self-Evolution** | ✅ **Yes, user behavior driven** | ❌ None | ❌ None | ❌ None |
-| **Uncertainty Output** | ✅ **Unsure mechanism** | ❌ None | ❌ None | ❌ None |
-| **Agent Integration** | ✅ **Hooking zero modification** | ⚠️ Standalone service needs integration | ⚠️ Standalone service needs integration | ⚠️ API call needs integration |
+| Dimension | MaskClaw | EdgeClaw | Google DLP | Microsoft Presidio | Cloud LLM Audit |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Context Awareness** | ✅ Multi-condition combined judgment | ✅ S1/S2/S3 classification (rule + local LLM semantic) | ❌ Format matching | ❌ Format matching | ⚠️ Semantic understanding but requires cloud upload |
+| **Personalized Rules** | ✅ Automatic extraction and continuous evolution | ⚠️ Customizable rules, but manual configuration | ❌ Static rule base | ❌ Static rule base | ❌ No memory |
+| **Data Never Leaves Edge** | ✅ **Fully on-device** | ✅ S2 redacted, S3 fully local | ❌ Requires internet | ✅ Local deployment possible | ❌ Must upload screenshots |
+| **Self-Evolution** | ✅ **Yes, user behavior driven** | ❌ **None, static rules** | ❌ None | ❌ None | ❌ None |
+| **Uncertainty Output** | ✅ **Unsure mechanism** | ❌ None | ❌ None | ❌ None | ❌ None |
+| **Agent Integration** | ✅ **Hooking zero modification** | ✅ **10 hooks, full lifecycle coverage** | ⚠️ Standalone service needs integration | ⚠️ Standalone service needs integration | ⚠️ API call needs integration |
 
 <h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Key Gaps</h3>
 
