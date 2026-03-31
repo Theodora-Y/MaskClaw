@@ -103,42 +103,22 @@ def _atomic_write_jsonl(file_path: Path, record: Dict[str, Any], lock: threading
 
 
 class UserLogger:
-    """按用户分组的日志记录器，支持 behavior_log 和 correction_log 分离。"""
+    """按用户分组的日志记录器，只记录 correction_log。"""
 
     def __init__(self, user_id: str, base_dir: str = "memory/logs"):
         self.user_id = user_id
         self.base_dir = Path(base_dir)
         self.user_dir = self.base_dir / user_id
-        self.behavior_log_file = self.user_dir / "behavior_log.jsonl"
         self.correction_log_file = self.user_dir / "correction_log.jsonl"
-        self._behavior_lock = threading.Lock()
         self._correction_lock = threading.Lock()
 
     def _ensure_dir(self) -> None:
         self.user_dir.mkdir(parents=True, exist_ok=True)
 
-    def write_behavior_log(self, record: Dict[str, Any]) -> None:
-        """写入用户未参与的日志（level=1）"""
-        self._ensure_dir()
-        _atomic_write_jsonl(self.behavior_log_file, record, self._behavior_lock)
-
     def write_correction_log(self, record: Dict[str, Any]) -> None:
         """写入用户参与的日志（level=2）"""
         self._ensure_dir()
         _atomic_write_jsonl(self.correction_log_file, record, self._correction_lock)
-
-    def read_behavior_logs(self, limit: int = 100) -> List[Dict[str, Any]]:
-        """读取最近的 behavior 日志"""
-        if not self.behavior_log_file.exists():
-            return []
-        records = []
-        with self._behavior_lock:
-            with self.behavior_log_file.open("r", encoding="utf-8") as f:
-                lines = f.readlines()
-                for line in lines[-limit:]:
-                    if line.strip():
-                        records.append(json.loads(line))
-        return records
 
     def read_correction_logs(self, limit: int = 100) -> List[Dict[str, Any]]:
         """读取最近的 correction 日志"""
@@ -231,19 +211,14 @@ def log_event(
         "expire_ts": expire_ts,
     }
 
-    # 旧格式兼容字段（双写）
+    # ========== v2.0 只写: session_trace.jsonl + correction_log.jsonl ==========
     logger = UserLogger(user_id=user_id, base_dir=base_dir)
 
-    # 根据 resolution 决定写入哪些文件
-    if resolution in ["allow", "block", "mask"]:
-        # level=1: 只写 behavior_log
-        logger.write_behavior_log(record)
-    else:
-        # level=2: 同时写 behavior_log 和 correction_log
-        logger.write_behavior_log(record)
+    # 只写入 correction_log（纠错记录）
+    if resolution not in ["allow", "block", "mask"]:
         logger.write_correction_log(record)
 
-    # ========== v2.0 双写: session_trace.jsonl ==========
+    # ========== v2.0: session_trace.jsonl ==========
     if scenario_tag:
         # 将 meta 信息传递给行为链记录器
         meta_fields = {

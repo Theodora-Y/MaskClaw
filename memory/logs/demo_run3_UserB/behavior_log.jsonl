@@ -1,3 +1,0 @@
-{"event_id": "demo_run3_UserB_1773983918_0006", "user_id": "demo_run3_UserB", "ts": 1773983918, "app_context": "wechat", "action": "send_message", "field": "home_address", "resolution": "block", "level": 1, "processed": false, "expire_ts": 1774588718}
-{"event_id": "demo_run3_UserB_1773983919_0007", "user_id": "demo_run3_UserB", "ts": 1773983919, "app_context": "wechat", "action": "send_message", "field": "message_content", "resolution": "block", "level": 1, "processed": false, "expire_ts": 1774588719}
-{"event_id": "demo_run3_UserB_1773983920_0008", "user_id": "demo_run3_UserB", "ts": 1773983920, "app_context": "wechat", "action": "send_message", "field": "message_content", "resolution": "block", "level": 1, "processed": false, "expire_ts": 1774588720}

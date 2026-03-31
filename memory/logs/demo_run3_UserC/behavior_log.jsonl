@@ -1,1 +1,0 @@
-{"event_id": "demo_run3_UserC_1773983921_0009", "user_id": "demo_run3_UserC", "ts": 1773983921, "app_context": "wechat", "action": "send_message", "field": "message_content", "resolution": "block", "level": 1, "processed": false, "expire_ts": 1774588721}

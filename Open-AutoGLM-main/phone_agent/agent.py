@@ -94,6 +94,11 @@ class PhoneAgent:
         )
         self._privacy_client = PrivacyAgentClient(timeout_seconds=timeout_seconds)
         self._privacy_client_enabled = self._privacy_client.enabled
+
+        # 按需拉取 skills 的开关（默认开启）
+        skill_retrieval_raw = os.getenv("PHONE_AGENT_SKILL_RETRIEVAL", "true").strip()
+        self._skill_retrieval_enabled = skill_retrieval_raw.lower() in {"1", "true", "yes", "on"}
+
         self._skill_catalog_path = Path(__file__).resolve().parents[1] / "SKILL_CATALOG.md"
         self._skill_catalog_content = ""
         self._installed_skills: dict[str, str] = {}
@@ -126,6 +131,10 @@ class PhoneAgent:
         self._context = []
         self._step_count = 0
         self._correction_count_before_run = self._count_corrections()
+
+        # ===== 按需拉取匹配的 skills（新增）=====
+        if self._privacy_client_enabled and self._skill_retrieval_enabled:
+            self._retrieve_and_load_skills(task)
 
         # First step with user prompt
         result = self._execute_step(task, is_first=True)
@@ -256,6 +265,184 @@ class PhoneAgent:
             "The following skills are available and should be applied when relevant:\n"
             f"{self._skill_catalog_content}"
         )
+
+    def _retrieve_and_load_skills(self, task: str) -> None:
+        """根据任务检索并加载相关的 skills
+
+        1. 检测 app_context
+        2. 调用 search_skills API
+        3. 对每个匹配的 skill 调用 get_skill_detail
+        4. 将 skill 规则注入 _context
+        """
+        # 1. 检测 app_context
+        app_context = self._detect_app_context(task)
+        action_keywords = self._extract_action_keywords(task)
+
+        if self.agent_config.verbose:
+            print(f"[skill-retrieval] task={task[:50]}..., app_context={app_context}")
+
+        # 2. 检索匹配的 skills
+        try:
+            search_result = self._privacy_client.search_skills(
+                user_id=self.user_id,
+                task_goal=task,
+                app_context=app_context,
+                action_keywords=action_keywords,
+                limit=5,
+            )
+        except Exception as e:
+            if self.agent_config.verbose:
+                print(f"[skill-retrieval] search_skills failed: {e}")
+            return
+
+        skills = search_result.get("skills", [])
+        if not skills:
+            if self.agent_config.verbose:
+                print("[skill-retrieval] no matching skills found")
+            return
+
+        if self.agent_config.verbose:
+            print(f"[skill-retrieval] found {len(skills)} matching skills")
+
+        # 3. 加载每个 skill 的详细内容
+        loaded_skills = []
+        for skill in skills:
+            skill_name = skill.get("skill_name", "")
+            version = skill.get("version", "")
+            if not skill_name or not version:
+                continue
+
+            try:
+                skill_detail = self._privacy_client.get_skill_detail(
+                    user_id=self.user_id,
+                    skill_name=skill_name,
+                    version=version,
+                )
+                if skill_detail:
+                    loaded_skills.append(skill_detail)
+            except Exception as e:
+                if self.agent_config.verbose:
+                    print(f"[skill-retrieval] get_skill_detail failed for {skill_name}: {e}")
+
+        if not loaded_skills:
+            return
+
+        # 4. 将 skill 规则注入 _context 和 _skill_catalog_content
+        self._apply_skill_context(loaded_skills)
+
+    def _detect_app_context(self, task: str) -> str:
+        """从任务描述中检测 app_context
+
+        Args:
+            task: 任务描述文本
+
+        Returns:
+            检测到的 app_context，如果无法检测返回 "unknown"
+        """
+        app_keywords = {
+            "wechat": ["微信", "wechat", "微信聊天", "weixin"],
+            "dingtalk": ["钉钉", "dingtalk", "dtalk"],
+            "hospital_oa": ["医院", "oa", "医院系统", "病历", "挂号"],
+            "alipay": ["支付宝", "alipay"],
+            "bank": ["银行", "转账", "支付"],
+            "settings": ["设置", "settings"],
+            "contacts": ["联系人", "通讯录", "contacts"],
+            "photos": ["相册", "照片", "photos", "gallery"],
+        }
+
+        task_lower = task.lower()
+        for app, keywords in app_keywords.items():
+            for kw in keywords:
+                if kw.lower() in task_lower:
+                    if self.agent_config.verbose:
+                        print(f"[skill-retrieval] detected app_context: {app} (keyword: {kw})")
+                    return app
+
+        return "unknown"
+
+    def _extract_action_keywords(self, task: str) -> str:
+        """从任务描述中提取动作关键词
+
+        Args:
+            task: 任务描述文本
+
+        Returns:
+            逗号分隔的动作关键词
+        """
+        action_keywords = {
+            "截图": ["截图", "截屏", "screenshot", "screen capture"],
+            "发送": ["发送", "分享", "转发", "send", "share", "forward"],
+            "上传": ["上传", "upload"],
+            "下载": ["下载", "download"],
+            "复制": ["复制", "copy"],
+            "粘贴": ["粘贴", "paste"],
+            "输入": ["输入", "填写", "input", "fill"],
+            "登录": ["登录", "login", "signin"],
+            "注册": ["注册", "register", "signup"],
+        }
+
+        task_lower = task.lower()
+        found_actions = []
+
+        for action, keywords in action_keywords.items():
+            for kw in keywords:
+                if kw.lower() in task_lower:
+                    found_actions.append(action)
+                    break
+
+        return ",".join(found_actions)
+
+    def _apply_skill_context(self, skills: list[dict[str, Any]]) -> None:
+        """将 skill 规则应用到 agent 上下文
+
+        Args:
+            skills: 已加载的 skill 详情列表
+        """
+        catalog_lines = ["# SKILL CATALOG", ""]
+
+        for skill in skills:
+            skill_name = skill.get("skill_name", "Unknown")
+            version = skill.get("version", "unknown")
+            app_context = skill.get("scene", "")
+            confidence = skill.get("confidence", 0)
+            strategy = skill.get("strategy", "")
+            rule_text = skill.get("rule_text", "")
+            skill_md_content = skill.get("skill_md_content", "")
+            rules_json_content = skill.get("rules_json_content")
+
+            # 添加到 catalog
+            catalog_lines.append(f"## {skill_name} (v{version})")
+            catalog_lines.append(f"- 场景: {app_context}")
+            catalog_lines.append(f"- 策略: {strategy}")
+            catalog_lines.append(f"- 置信度: {confidence}")
+            if rule_text:
+                catalog_lines.append(f"- 规则: {rule_text[:100]}...")
+            catalog_lines.append("")
+
+            # 将 SKILL.md 内容添加到上下文
+            if skill_md_content:
+                self._context.append({
+                    "role": "system",
+                    "content": f"""[Skill: {skill_name}@{version}]
+When this skill applies (scene={app_context}), follow these rules:
+{skill_md_content}"""
+                })
+
+            # 将 rules.json 内容添加到上下文
+            if rules_json_content:
+                if isinstance(rules_json_content, list):
+                    rules_text = json.dumps(rules_json_content, ensure_ascii=False, indent=2)
+                else:
+                    rules_text = str(rules_json_content)
+
+                self._context.append({
+                    "role": "system",
+                    "content": f"""[Privacy Rules for {skill_name}]
+{rules_text}"""
+                })
+
+        # 更新 catalog 内容
+        self._skill_catalog_content = "\n".join(catalog_lines).strip()
 
     def _count_corrections(self) -> int:
         """Count correction records from local correction log."""

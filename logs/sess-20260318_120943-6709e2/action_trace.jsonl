@@ -1,3 +1,0 @@
-{"timestamp": 1773806983, "action": "agent_fill_form", "correction": "", "metadata": {"role": "agent", "target_id": "address_field", "content": "北京市海淀区xx路", "reason": "用户要求填写收货地址", "screenshot_enabled": false}}
-{"timestamp": 1773806983, "action": "clear", "correction": "user_modified_previous_action", "metadata": {"role": "user", "target_id": "address_field", "content": ""}}
-{"timestamp": 1773806983, "action": "input", "correction": "", "metadata": {"role": "user", "target_id": "address_field", "content": "公司地址"}}

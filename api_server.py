@@ -19,6 +19,7 @@ import asyncio
 from pathlib import Path
 from skill_registry.skill_db import SkillDB
 from memory.chat_history_db import ChatHistoryDB
+from memory.rag_client import RAGClient
 from auth_router import auth_router
 from notifications_router import notifications_router
 
@@ -604,6 +605,163 @@ def _multipart_response(meta: Dict, image_bytes: bytes, mime_type: str) -> Respo
         b"--" + boundary.encode() + b"--\r\n",
     ])
     return Response(content=body, media_type=f"multipart/mixed; boundary={boundary}")
+
+
+@app.get("/skills/search")
+def search_skills(
+    user_id: str,
+    task_goal: str = "",
+    app_context: str = "",
+    action_keywords: str = "",
+    limit: int = Query(default=5, ge=1, le=20),
+    x_timestamp: str = Header(None),
+    x_signature: str = Header(None),
+):
+    """
+    根据任务上下文检索匹配的 skills
+
+    客户端调用：
+        GET /skills/search?user_id=demo_UserA&task_goal=发送病历&app_context=hospital_oa
+
+    响应示例：
+        {
+            "skills": [
+                {
+                    "skill_name": "hospital-privacy-protect",
+                    "version": "v1.0.0",
+                    "app_context": "hospital_oa",
+                    "confidence": 0.95,
+                    "trigger_count": 12,
+                    ...
+                }
+            ],
+            "matched_by": {
+                "app_context": "hospital_oa",
+                "task_goal": "发送病历",
+            },
+            "total": 1
+        }
+    """
+    require_auth(user_id, x_timestamp, x_signature)
+
+    db = get_skill_db()
+    skills = db.search_skills(
+        user_id=user_id,
+        task_goal=task_goal,
+        app_context=app_context,
+        action_keywords=action_keywords,
+        limit=limit,
+    )
+
+    return {
+        "skills": skills,
+        "matched_by": {
+            "task_goal": task_goal or None,
+            "app_context": app_context or None,
+            "action_keywords": action_keywords or None,
+        },
+        "total": len(skills),
+    }
+
+
+@app.get("/skills/detail")
+def get_skill_detail(
+    user_id: str,
+    skill_name: str,
+    version: str = "",
+    x_timestamp: str = Header(None),
+    x_signature: str = Header(None),
+):
+    """
+    获取完整 skill 详情（包含 SKILL.md 和 rules.json 内容）
+
+    客户端调用：
+        GET /skills/detail?user_id=demo_UserA&skill_name=hospital-privacy-protect&version=v1.0.0
+
+    响应示例：
+        {
+            "skill_name": "hospital-privacy-protect",
+            "version": "v1.0.0",
+            "skill_md_content": "完整 SKILL.md 内容...",
+            "rules_json_content": [...],
+            ...
+        }
+    """
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id 不能为空")
+
+    require_auth(user_id, x_timestamp, x_signature)
+
+    db = get_skill_db()
+    skill = db.get_skill_detail(user_id, skill_name, version)
+
+    if not skill:
+        raise HTTPException(status_code=404, detail=f"Skill {skill_name}@{version} 不存在")
+
+    return skill
+
+
+@app.post("/skills/rag/query")
+def rag_query_skills(
+    body: Dict[str, Any] = Body(...),
+    x_timestamp: str = Header(None),
+    x_signature: str = Header(None),
+):
+    """
+    RAG 向量检索，查找相关隐私规则
+
+    客户端调用：
+        POST /skills/rag/query
+        {
+            "user_id": "demo_UserA",
+            "query": "用户想分享医院联系人截图",
+            "app_context": "hospital_oa",
+            "top_k": 3
+        }
+
+    响应示例：
+        {
+            "rules": [
+                "禁止在外部平台分享含敏感信息的截图",
+                "截图前需检查是否包含身份证号、银行卡号等"
+            ],
+            "sources": [
+                {"skill_name": "...", "confidence": 0.9}
+            ]
+        }
+    """
+    user_id = body.get("user_id")
+    query = body.get("query", "")
+    app_context = body.get("app_context", "")
+    top_k = body.get("top_k", 3)
+
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id 不能为空")
+
+    require_auth(user_id, x_timestamp, x_signature)
+
+    # 使用 ChromaDB 进行向量检索
+    try:
+        rag = RAGClient()
+        results = rag.query(
+            query_text=query,
+            collection_name=f"rules_{user_id}",
+            where={"app_context": app_context} if app_context else None,
+            top_k=top_k,
+        )
+
+        return {
+            "rules": results.get("documents", []),
+            "metadatas": results.get("metadatas", []),
+            "distances": results.get("distances", []),
+            "sources": [
+                {"skill_name": m.get("skill_name", ""), "confidence": m.get("confidence", 0)}
+                for m in results.get("metadatas", [])
+            ],
+        }
+    except Exception as e:
+        logger.warning(f"RAG 查询失败: {e}, 返回空结果")
+        return {"rules": [], "metadatas": [], "distances": [], "sources": []}
 
 
 # ============== 辅助接口（可选，用于查看状态）==============
@@ -1525,6 +1683,195 @@ async def finish_autoglm_task(
     logger.info(f"[AutoGLM Task] Finished: task_id={task_id}, status={status}")
 
     return {"status": "ok"}
+
+
+# ============== AutoGLM 日志存储接口（直接生成 session_trace）==============
+
+from skills.behavior_monitor import TraceChainLogger, log_action_to_chain, flush_and_save_chain
+from datetime import datetime
+
+# 任务缓存：task_id -> {"user_id": "", "task_description": "", "scenario_tag": "", "actions": []}
+_task_action_cache: Dict[str, Dict[str, Any]] = {}
+_tasks_lock = threading.Lock()
+
+
+@app.post("/autoglm/log/save")
+async def save_autoglm_log(
+    body: Dict[str, Any] = Body(...),
+):
+    """
+    接收 AutoGLM 执行日志，直接生成 session_trace 行为链
+
+    Windows 后端调用：
+    POST http://127.0.0.1:9001/autoglm/log/save
+    {
+        "user_id": "UserA",
+        "task_id": "xxx",
+        "task_description": "帮我在淘宝填收货地址",
+        "event": "log_summary",
+        "data": {
+            "action_metadata": {"action": "share_or_send", "app_context": "钉钉", ...},
+            "outcome": {"final_action": "mask", ...},
+            ...
+        }
+    }
+    """
+    user_id = body.get("user_id", "unknown")
+    task_id = body.get("task_id", "unknown")
+    task_description = body.get("task_description", "")
+    event = body.get("event", "log_summary")
+    data = body.get("data", {})
+
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id 不能为空")
+
+    # 初始化任务缓存
+    with _tasks_lock:
+        if task_id not in _task_action_cache:
+            _task_action_cache[task_id] = {
+                "user_id": user_id,
+                "task_description": task_description,
+                "scenario_tag": task_description[:50] if task_description else task_id,
+                "actions": [],
+                "start_ts": int(time.time()),
+            }
+
+    # 解析日志数据
+    action_metadata = data.get("action_metadata", {})
+    outcome = data.get("outcome", {})
+    l1_detection = data.get("l1_detection", {})
+    l2_reasoning = data.get("l2_reasoning", {})
+
+    action = action_metadata.get("action", "unknown")
+    app_context = action_metadata.get("app_context", "unknown")
+    resolution = outcome.get("final_action", outcome.get("resolution", "unknown"))
+    field = outcome.get("field", "")
+    rule_match = l2_reasoning.get("rule_match", "")
+
+    # 判断是否纠错（根据 resolution）
+    is_correction = resolution in ["correction", "user_denied", "user_modified"]
+    correction_type = None
+    if is_correction:
+        correction_type = resolution if resolution != "correction" else "user_denied"
+
+    # 生成行为链记录
+    action_record = {
+        "action": action,
+        "resolution": resolution,
+        "field": field,
+        "rule_match": rule_match,
+        "app_context": app_context,
+        "ts": int(time.time()),
+        "is_correction": is_correction,
+        "correction_type": correction_type,
+        "pii_type": l1_detection.get("pii_type", ""),
+        "agent_intent": action_metadata.get("description", ""),
+        "quality_score": l2_reasoning.get("confidence"),
+    }
+
+    # 添加到缓存
+    with _tasks_lock:
+        if task_id in _task_action_cache:
+            _task_action_cache[task_id]["actions"].append(action_record)
+            _task_action_cache[task_id]["end_ts"] = int(time.time())
+
+    logger.info(f"[AutoGLM Log] Saved action: user_id={user_id}, task_id={task_id}, action={action}, resolution={resolution}")
+
+    return {"status": "ok", "saved": True}
+
+
+@app.post("/autoglm/task/flush/{task_id}")
+async def flush_autoglm_task(
+    task_id: str,
+    user_id: str = Query(...),
+):
+    """
+    任务结束时，将缓存的 actions 生成 session_trace 行为链并写入磁盘
+
+    Windows 后端在任务结束时调用：
+    POST http://127.0.0.1:9001/autoglm/task/flush/{task_id}?user_id=UserA
+    """
+    with _tasks_lock:
+        task_data = _task_action_cache.pop(task_id, None)
+
+    if not task_data:
+        return {"status": "ok", "message": "no cached actions", "saved": False}
+
+    actions = task_data.get("actions", [])
+    if not actions:
+        return {"status": "ok", "message": "no actions", "saved": False}
+
+    # 生成行为链
+    scenario_tag = task_data.get("scenario_tag", task_id)
+    start_ts = task_data.get("start_ts", int(time.time()) - 60)
+    end_ts = task_data.get("end_ts", int(time.time()))
+    uid = task_data.get("user_id", user_id)
+
+    chain_id = f"{uid}_{scenario_tag}_{start_ts}"
+    correction_count = sum(1 for a in actions if a.get("is_correction", False))
+
+    # 确定最终决策
+    final_resolution = "allow"
+    for a in reversed(actions):
+        if a.get("resolution") in ["block", "mask", "correction"]:
+            final_resolution = a["resolution"]
+            break
+
+    # 生成行为链结构
+    chain = {
+        "chain_id": chain_id,
+        "user_id": uid,
+        "app_context": actions[0].get("app_context", "unknown") if actions else "unknown",
+        "scenario_tag": scenario_tag,
+        "rule_type": "H",  # 暂时固定为 H，后续可从日志中提取
+        "start_ts": start_ts,
+        "end_ts": end_ts,
+        "action_count": len(actions),
+        "has_correction": correction_count > 0,
+        "correction_count": correction_count,
+        "final_resolution": final_resolution,
+        "processed": False,
+        "actions": [
+            {
+                "action_index": i,
+                "ts": a.get("ts", start_ts + i),
+                "action": a.get("action", "unknown"),
+                "resolution": a.get("resolution", "unknown"),
+                "is_correction": a.get("is_correction", False),
+                "correction_type": a.get("correction_type"),
+                "field": a.get("field", ""),
+                "rule_match": a.get("rule_match", ""),
+                "pii_type": a.get("pii_type", ""),
+                "agent_intent": a.get("agent_intent", ""),
+                "quality_score": a.get("quality_score"),
+            }
+            for i, a in enumerate(actions)
+        ],
+    }
+
+    # 写入 session_trace.jsonl
+    logger = TraceChainLogger(uid, str(MEMORY_ROOT / "logs"))
+    logger.write_chain(chain)
+
+    logger.info(f"[AutoGLM] Flushed chain: chain_id={chain_id}, actions={len(actions)}")
+
+    return {
+        "status": "ok",
+        "saved": True,
+        "chain_id": chain_id,
+        "action_count": len(actions),
+    }
+
+
+@app.get("/autoglm/chains/{user_id}")
+async def list_autoglm_chains(
+    user_id: str,
+    limit: int = Query(20, ge=1, le=100),
+):
+    """列出用户的行为链日志"""
+    logger = TraceChainLogger(user_id, str(MEMORY_ROOT / "logs"))
+    chains = logger.read_chains(limit=limit)
+    return {"user_id": user_id, "chains": chains, "count": len(chains)}
 
 
 if __name__ == "__main__":

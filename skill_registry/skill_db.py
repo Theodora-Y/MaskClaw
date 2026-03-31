@@ -616,6 +616,175 @@ class SkillDB:
             ).fetchall()
         return [self._row_to_dict(r) for r in rows]
 
+    def search_skills(
+        self,
+        user_id: str,
+        task_goal: str = "",
+        app_context: str = "",
+        action_keywords: str = "",
+        limit: int = 5,
+    ) -> List[Dict[str, Any]]:
+        """根据任务上下文检索匹配的 skills
+
+        同时查询 skills 表和 sop_version 表。
+
+        Args:
+            user_id: 用户ID
+            task_goal: 任务目标关键词（模糊匹配 rule_text 和 strategy）
+            app_context: 应用上下文（精确匹配 scene 字段）
+            action_keywords: 动作关键词（截图、发送等，模糊匹配 rule_text 和 strategy）
+            limit: 返回数量限制
+
+        Returns:
+            匹配的 skills 列表，按置信度降序
+        """
+        results = []
+
+        # 构建 WHERE 条件
+        def build_conditions(table_fields):
+            conditions = []
+            params = []
+
+            if 'path' in table_fields:
+                conditions.append("path != ''")
+            if 'status' in table_fields:
+                conditions.append("status = 'active'")
+
+            if app_context:
+                # 优先匹配 scene/app_context 字段
+                if 'scene' in table_fields:
+                    conditions.append("scene LIKE ?")
+                    params.append(f"%{app_context}%")
+                elif 'app_context' in table_fields:
+                    conditions.append("app_context LIKE ?")
+                    params.append(f"%{app_context}%")
+
+            if task_goal:
+                if 'rule_text' in table_fields:
+                    conditions.append("(rule_text LIKE ? OR strategy LIKE ?)")
+                    params.extend([f"%{task_goal}%", f"%{task_goal}%"])
+                elif 'task_description' in table_fields:
+                    conditions.append("task_description LIKE ?")
+                    params.append(f"%{task_goal}%")
+
+            if action_keywords:
+                if 'rule_text' in table_fields:
+                    conditions.append("(rule_text LIKE ? OR strategy LIKE ?)")
+                    params.extend([f"%{action_keywords}%", f"%{action_keywords}%"])
+                elif 'task_description' in table_fields:
+                    conditions.append("task_description LIKE ?")
+                    params.append(f"%{action_keywords}%")
+
+            return conditions, params
+
+        # 1. 查询 skills 表
+        with self._connect() as conn:
+            skills_fields = [col[1] for col in conn.execute("PRAGMA table_info(skills)").fetchall()]
+            conditions, params = build_conditions(skills_fields)
+
+            if conditions:
+                sql = f"""
+                    SELECT *, 'skills' as source_table FROM skills
+                    WHERE user_id = ? AND {' AND '.join(conditions)}
+                    ORDER BY confidence DESC, trigger_count DESC, created_ts DESC
+                    LIMIT ?
+                """
+                params = [user_id] + params + [limit]
+                rows = conn.execute(sql, params).fetchall()
+                results.extend([self._row_to_dict(r) for r in rows])
+
+        # 2. 查询 sop_version 表
+        with self._connect() as conn:
+            version_fields = [col[1] for col in conn.execute("PRAGMA table_info(sop_version)").fetchall()]
+            conditions, params = build_conditions(version_fields)
+
+            if conditions:
+                sql = f"""
+                    SELECT *, 'sop_version' as source_table FROM sop_version
+                    WHERE user_id = ? AND {' AND '.join(conditions)}
+                    ORDER BY confidence DESC, created_ts DESC
+                    LIMIT ?
+                """
+                params = [user_id] + params + [limit]
+                rows = conn.execute(sql, params).fetchall()
+                results.extend([self._row_to_dict(r) for r in rows])
+
+        # 3. 去重并按置信度排序
+        seen = set()
+        unique_results = []
+        for r in results:
+            key = (r.get('skill_name'), r.get('version'))
+            if key not in seen:
+                seen.add(key)
+                unique_results.append(r)
+
+        unique_results.sort(key=lambda x: x.get('confidence', 0), reverse=True)
+        return unique_results[:limit]
+
+    def get_skill_detail(
+        self,
+        user_id: str,
+        skill_name: str,
+        version: str,
+    ) -> Optional[Dict[str, Any]]:
+        """获取完整 skill 详情
+
+        优先从 skills 表查询，如果没找到则查询 sop_version 表。
+
+        Args:
+            user_id: 用户ID
+            skill_name: 技能名称
+            version: 版本号
+
+        Returns:
+            skill 详情（包含 SKILL.md 和 rules.json 内容），未找到返回 None
+        """
+        with self._connect() as conn:
+            # 1. 先查询 skills 表
+            row = conn.execute(
+                """
+                SELECT * FROM skills
+                WHERE user_id = ? AND skill_name = ? AND version = ?
+                """,
+                (user_id, skill_name, version),
+            ).fetchone()
+
+        result = None
+        if row:
+            result = self._row_to_dict(row)
+        else:
+            # 2. 如果 skills 表没有，查询 sop_version 表
+            with self._connect() as conn:
+                row = conn.execute(
+                    """
+                    SELECT * FROM sop_version
+                    WHERE user_id = ? AND skill_name = ? AND version = ?
+                    """,
+                    (user_id, skill_name, version),
+                ).fetchone()
+            if row:
+                result = self._row_to_dict(row)
+
+        if not result:
+            return None
+
+        # 如果有 path，尝试读取实际的 SKILL.md 和 rules.json
+        path = result.get("path")
+        if path:
+            skill_dir = Path(path)
+            skill_md = skill_dir / "SKILL.md"
+            rules_json = skill_dir / "rules.json"
+
+            if skill_md.exists():
+                result["skill_md_content"] = skill_md.read_text(encoding="utf-8")
+            if rules_json.exists():
+                try:
+                    result["rules_json_content"] = json.loads(rules_json.read_text(encoding="utf-8"))
+                except Exception:
+                    result["rules_json_content"] = None
+
+        return result
+
     def get_all_active_hashes(self, user_id: str) -> Dict[str, str]:
         with self._connect() as conn:
             rows = conn.execute(
