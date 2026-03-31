@@ -7,6 +7,10 @@
 </h1>
 
 <p align="center">
+  <a href="README.md">简体中文</a> | <a href="README_EN.md">English</a>
+</p>
+
+<p align="center">
   <a href="https://www.python.org/">
     <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
   </a>
@@ -229,6 +233,8 @@ The system has clear confidence level classification for its judgments, with dif
 | Operation Scenarios | 6 types of real scenarios |
 | Generalization Variants | Screenshot degradation, phrasing rewrites, DOM structure perturbation |
 | Judgment Labels | Allow / Block / Mask / Ask / Unsure |
+
+---
 
 <h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Demo Screenshots</h2>
 

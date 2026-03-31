@@ -7,6 +7,10 @@
 </h1>
 
 <p align="center">
+  <a href="README.md">简体中文</a> | <a href="README_EN.md">English</a>
+</p>
+
+<p align="center">
   <a href="https://www.python.org/">
     <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
   </a>
@@ -229,6 +233,8 @@ MaskClaw 在不改动 AutoGLM、OpenClaw 等第三方 Agent 任何代码的前�
 | 操作场景 | 6 类真实场景 |
 | 泛化变体 | 截图劣化、话术改写、DOM结构扰动 |
 | 判决标签 | Allow / Block / Mask / Ask / Unsure |
+
+---
 
 <h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">前端展示</h2>
 
