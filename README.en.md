@@ -243,7 +243,7 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
 <div align="center">
   <table width="100%" align="center" style="width:100%; table-layout:fixed;">
     <tr>
-      <td align="center" width="50%" style="padding: 8px;">
+      <td align="center" width="50%" style="padding: 8px; background-color: #F9FAFB;">
         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="Send Commands">
           <rect x="0" y="0" width="600" height="56" rx="10" fill="#0A66C2"/>
           <text x="300" y="37" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">🚀 Send Commands</text>
@@ -251,7 +251,7 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
         <div style="height: 10px;"></div>
         <img src="docs/assets.md/发送命令.gif" alt="Send Commands" width="100%" style="border-radius: 8px; border: 2px solid #E8F0FE;"/>
       </td>
-      <td align="center" width="50%" style="padding: 8px;">
+      <td align="center" width="50%" style="padding: 8px; background-color: #F9FAFB;">
         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="Masking Display">
           <rect x="0" y="0" width="600" height="56" rx="10" fill="#6366F1"/>
           <text x="300" y="37" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">🎭 Masking Display</text>
@@ -261,7 +261,7 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
       </td>
     </tr>
     <tr>
-      <td align="center" width="50%" style="padding: 8px;">
+      <td align="center" width="50%" style="padding: 8px; background-color: #F3F4F6;">
         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="Notification Alerts">
           <rect x="0" y="0" width="600" height="56" rx="10" fill="#F59E0B"/>
           <text x="300" y="37" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">🔔 Notification Alerts</text>
@@ -269,7 +269,7 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
         <div style="height: 10px;"></div>
         <img src="docs/assets.md/通知.gif" alt="Notification Alerts" width="100%" style="border-radius: 8px; border: 2px solid #FEF3C7;"/>
       </td>
-      <td align="center" width="50%" style="padding: 8px;">
+      <td align="center" width="50%" style="padding: 8px; background-color: #F3F4F6;">
         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="Skill List Management">
           <rect x="0" y="0" width="600" height="56" rx="10" fill="#10B981"/>
           <text x="300" y="37" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">🧬 Skill List Management</text>

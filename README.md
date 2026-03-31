@@ -243,7 +243,7 @@ MaskClaw 提供简洁直观的 Web 界面，实时展示隐私保护状态与操
 <div align="center">
   <table width="100%" align="center" style="width:100%; table-layout:fixed;">
     <tr>
-      <td align="center" width="50%" style="padding: 8px;">
+      <td align="center" width="50%" style="padding: 8px; background-color: #F9FAFB;">
         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="发送命令">
           <rect x="0" y="0" width="600" height="56" rx="10" fill="#0A66C2"/>
           <text x="300" y="37" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">🚀 发送命令</text>
@@ -251,7 +251,7 @@ MaskClaw 提供简洁直观的 Web 界面，实时展示隐私保护状态与操
         <div style="height: 10px;"></div>
         <img src="docs/assets.md/发送命令.gif" alt="发送命令" width="100%" style="border-radius: 8px; border: 2px solid #E8F0FE;"/>
       </td>
-      <td align="center" width="50%" style="padding: 8px;">
+      <td align="center" width="50%" style="padding: 8px; background-color: #F9FAFB;">
         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="打码显示">
           <rect x="0" y="0" width="600" height="56" rx="10" fill="#6366F1"/>
           <text x="300" y="37" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">🎭 打码显示</text>
@@ -261,7 +261,7 @@ MaskClaw 提供简洁直观的 Web 界面，实时展示隐私保护状态与操
       </td>
     </tr>
     <tr>
-      <td align="center" width="50%" style="padding: 8px;">
+      <td align="center" width="50%" style="padding: 8px; background-color: #F3F4F6;">
         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="通知提醒">
           <rect x="0" y="0" width="600" height="56" rx="10" fill="#F59E0B"/>
           <text x="300" y="37" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">🔔 通知提醒</text>
@@ -269,7 +269,7 @@ MaskClaw 提供简洁直观的 Web 界面，实时展示隐私保护状态与操
         <div style="height: 10px;"></div>
         <img src="docs/assets.md/通知.gif" alt="通知提醒" width="100%" style="border-radius: 8px; border: 2px solid #FEF3C7;"/>
       </td>
-      <td align="center" width="50%" style="padding: 8px;">
+      <td align="center" width="50%" style="padding: 8px; background-color: #F3F4F6;">
         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="Skill 列表管理">
           <rect x="0" y="0" width="600" height="56" rx="10" fill="#10B981"/>
           <text x="300" y="37" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">🧬 Skill 列表管理</text>
