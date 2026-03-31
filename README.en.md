@@ -7,7 +7,7 @@
 </h1>
 
 <p align="center">
-  <a href="README.md">简体中文</a> | <a href="README_EN.md">English</a>
+  <a href="README.md">简体中文</a> | <a href="README_en.md">English</a>
 </p>
 
 <p align="center">
@@ -244,33 +244,21 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
   <table width="100%" align="center" style="width:100%; table-layout:fixed;">
     <tr>
       <td align="center" width="50%">
-        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="84" viewBox="0 0 600 84" role="img" aria-label="Send Commands">
-          <rect x="0" y="0" width="600" height="84" rx="12" fill="#0A66C2"/>
-          <text x="300" y="54" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#FFFFFF">Send Commands</text>
-        </svg>
+        <img src="docs/assets.md/title-Send_Commands.png" alt="Send Commands" width="100%"/>
         <img src="docs/assets.md/发送命令.gif" alt="Send Commands" width="100%"/>
       </td>
       <td align="center" width="50%">
-        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="84" viewBox="0 0 600 84" role="img" aria-label="Masking Display">
-          <rect x="0" y="0" width="600" height="84" rx="12" fill="#0A66C2"/>
-          <text x="300" y="54" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#FFFFFF">Masking Display</text>
-        </svg>
+        <img src="docs/assets.md/title-Masking_Display.png" alt="Masking Display" width="100%"/>
         <img src="docs/assets.md/打码显示.gif" alt="Masking Display" width="100%"/>
       </td>
     </tr>
     <tr>
       <td align="center" width="50%">
-        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="84" viewBox="0 0 600 84" role="img" aria-label="Notification Alerts">
-          <rect x="0" y="0" width="600" height="84" rx="12" fill="#0A66C2"/>
-          <text x="300" y="54" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#FFFFFF">Notification Alerts</text>
-        </svg>
+        <img src="docs/assets.md/title-Notification_Alerts.png" alt="Notification Alerts" width="100%"/>
         <img src="docs/assets.md/通知.gif" alt="Notification Alerts" width="100%"/>
       </td>
       <td align="center" width="50%">
-        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="84" viewBox="0 0 600 84" role="img" aria-label="Skill List Management">
-          <rect x="0" y="0" width="600" height="84" rx="12" fill="#0A66C2"/>
-          <text x="300" y="54" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#FFFFFF">Skill List Management</text>
-        </svg>
+        <img src="docs/assets.md/title-Skill_List_Management.png" alt="Skill List Management" width="100%"/>
         <img src="docs/assets.md/skill列表.gif" alt="Skill List Management" width="100%"/>
       </td>
     </tr>
