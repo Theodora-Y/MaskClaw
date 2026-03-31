@@ -244,24 +244,24 @@ MaskClaw 提供简洁直观的 Web 界面，实时展示隐私保护状态与操
   <table width="100%" align="center" style="width:100%; table-layout:fixed;">
     <tr>
       <td align="center" width="50%" bgcolor="#E8F0FE">
-        <img src="docs/assets.md/title-发送命令.png" alt="发送命令" width="100%"/>
+        <strong>🚀 发送命令</strong>
         <br/>
         <img src="docs/assets.md/发送命令.gif" alt="发送命令" width="100%"/>
       </td>
       <td align="center" width="50%" bgcolor="#EEF2FF">
-        <img src="docs/assets.md/title-打码显示.png" alt="打码显示" width="100%"/>
+        <strong>🎭 打码显示</strong>
         <br/>
         <img src="docs/assets.md/打码显示.gif" alt="打码显示" width="100%"/>
       </td>
     </tr>
     <tr>
       <td align="center" width="50%" bgcolor="#FEF3C7">
-        <img src="docs/assets.md/title-通知提醒.png" alt="通知提醒" width="100%"/>
+        <strong>🔔 通知提醒</strong>
         <br/>
         <img src="docs/assets.md/通知.gif" alt="通知提醒" width="100%"/>
       </td>
       <td align="center" width="50%" bgcolor="#D1FAE5">
-        <img src="docs/assets.md/title-Skill_列表管理.png" alt="Skill 列表管理" width="100%"/>
+        <strong>🧬 Skill 列表管理</strong>
         <br/>
         <img src="docs/assets.md/skill列表.gif" alt="Skill 列表管理" width="100%"/>
       </td>

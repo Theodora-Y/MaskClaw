@@ -244,24 +244,24 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
   <table width="100%" align="center" style="width:100%; table-layout:fixed;">
     <tr>
       <td align="center" width="50%" bgcolor="#E8F0FE">
-        <img src="docs/assets.md/title-Send_Commands.png" alt="Send Commands" width="100%"/>
+        <strong>🚀 Send Commands</strong>
         <br/>
         <img src="docs/assets.md/发送命令.gif" alt="Send Commands" width="100%"/>
       </td>
       <td align="center" width="50%" bgcolor="#EEF2FF">
-        <img src="docs/assets.md/title-Masking_Display.png" alt="Masking Display" width="100%"/>
+        <strong>🎭 Masking Display</strong>
         <br/>
         <img src="docs/assets.md/打码显示.gif" alt="Masking Display" width="100%"/>
       </td>
     </tr>
     <tr>
       <td align="center" width="50%" bgcolor="#FEF3C7">
-        <img src="docs/assets.md/title-Notification_Alerts.png" alt="Notification Alerts" width="100%"/>
+        <strong>🔔 Notification Alerts</strong>
         <br/>
         <img src="docs/assets.md/通知.gif" alt="Notification Alerts" width="100%"/>
       </td>
       <td align="center" width="50%" bgcolor="#D1FAE5">
-        <img src="docs/assets.md/title-Skill_List_Management.png" alt="Skill List Management" width="100%"/>
+        <strong>🧬 Skill List Management</strong>
         <br/>
         <img src="docs/assets.md/skill列表.gif" alt="Skill List Management" width="100%"/>
       </td>
