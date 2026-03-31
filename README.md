@@ -243,19 +243,19 @@ MaskClaw 提供简洁直观的 Web 界面，实时展示隐私保护状态与操
 <div align="center">
   <table width="100%" align="center" style="width:100%; table-layout:fixed;">
     <tr>
-      <td align="center" width="50%" bgcolor="#E8F0FE">
+      <td align="center" width="50%" bgcolor="#D1FAE5">
         <strong>🚀 发送命令</strong>
         <br/>
         <img src="docs/assets.md/发送命令.gif" alt="发送命令" width="100%"/>
       </td>
-      <td align="center" width="50%" bgcolor="#EEF2FF">
+      <td align="center" width="50%" bgcolor="#D1FAE5">
         <strong>🎭 打码显示</strong>
         <br/>
         <img src="docs/assets.md/打码显示.gif" alt="打码显示" width="100%"/>
       </td>
     </tr>
     <tr>
-      <td align="center" width="50%" bgcolor="#FEF3C7">
+      <td align="center" width="50%" bgcolor="#D1FAE5">
         <strong>🔔 通知提醒</strong>
         <br/>
         <img src="docs/assets.md/通知.gif" alt="通知提醒" width="100%"/>

@@ -243,19 +243,19 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
 <div align="center">
   <table width="100%" align="center" style="width:100%; table-layout:fixed;">
     <tr>
-      <td align="center" width="50%" bgcolor="#E8F0FE">
+      <td align="center" width="50%" bgcolor="#D1FAE5">
         <strong>🚀 Send Commands</strong>
         <br/>
         <img src="docs/assets.md/发送命令.gif" alt="Send Commands" width="100%"/>
       </td>
-      <td align="center" width="50%" bgcolor="#EEF2FF">
+      <td align="center" width="50%" bgcolor="#D1FAE5">
         <strong>🎭 Masking Display</strong>
         <br/>
         <img src="docs/assets.md/打码显示.gif" alt="Masking Display" width="100%"/>
       </td>
     </tr>
     <tr>
-      <td align="center" width="50%" bgcolor="#FEF3C7">
+      <td align="center" width="50%" bgcolor="#D1FAE5">
         <strong>🔔 Notification Alerts</strong>
         <br/>
         <img src="docs/assets.md/通知.gif" alt="Notification Alerts" width="100%"/>
