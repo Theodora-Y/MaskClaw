@@ -7,7 +7,7 @@
 </h1>
 
 <p align="center">
-  <a href="README.md">简体中文</a> | <a href="README_en.md">English</a>
+  <a href="README.md">简体中文</a> | <a href="README.en.md">English</a>
 </p>
 
 <p align="center">
@@ -300,7 +300,7 @@ MaskClaw 提供简洁直观的 Web 界面，实时展示隐私保护状态与操
 <h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">同类对比</h2>
 
 | 维度 | MaskClaw | EdgeClaw | Google DLP | Microsoft Presidio | 云端大模型审核 |
-|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+|:---|:---:|:---:|:---:|:---:|:---:|
 | **语境感知** | ✅ 多条件组合判断 | ✅ S1/S2/S3 分类（规则 + 本地 LLM 语义） | ❌ 格式匹配 | ❌ 格式匹配 | ⚠️ 语义理解但需上云 |
 | **个性化规则** | ✅ 自动抽取持续进化 | ⚠️ 规则可自定义，但需手动配置 | ❌ 静态规则库 | ❌ 静态规则库 | ❌ 无记忆 |
 | **数据不出端** | ✅ **全端侧** | ✅ S2 脱敏转发，S3 完全本地 | ❌ 需联网 | ✅ 本地可部署 | ❌ 必须上传截图 |
