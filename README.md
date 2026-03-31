@@ -7,10 +7,6 @@
 </h1>
 
 <p align="center">
-  <a href="README.md">简体中文</a> | <a href="README_EN.md">English</a>
-</p>
-
-<p align="center">
   <a href="https://www.python.org/">
     <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
   </a>
