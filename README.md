@@ -382,7 +382,7 @@ curl http://127.0.0.1:8001/
 ### 5. SSH 端口映射
 
 ```bash
-ssh -L 8001:127.0.0.1:8001 root@connect.bjb1.seetacloud.com -N
+ssh -L 8001:127.0.0.1:8001 root@服务器 -N
 ```
 
 ---

@@ -5,3 +5,9 @@ Open-AutoGLM-main/
 P-GUI-Evo-chainlogs/
 frontend/
 档案.md
+test_evolution_demo.py
+test_mock_publish.py
+test_telemetry.py
+api_server.log
+demo.py
+run_with_privacy.sh
