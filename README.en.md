@@ -240,21 +240,26 @@ The system has clear confidence level classification for its judgments, with dif
 
 MaskClaw provides a clean and intuitive web interface for real-time privacy protection status and operation records.
 
-<h4 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1em; font-weight: bold; color: #555; border-left: 4px solid #bdc3c7; padding-left: 10px; margin-top: 1.2em;">Send Commands</h4>
-
-![Send Commands](docs/assets.md/发送命令.gif)
-
-<h4 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1em; font-weight: bold; color: #555; border-left: 4px solid #bdc3c7; padding-left: 10px; margin-top: 1.2em;">Masking Display</h4>
-
-![Masking Display](docs/assets.md/打码显示.gif)
-
-<h4 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1em; font-weight: bold; color: #555; border-left: 4px solid #bdc3c7; padding-left: 10px; margin-top: 1.2em;">Notification Alerts</h4>
-
-![Notifications](docs/assets.md/通知.gif)
-
-<h4 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1em; font-weight: bold; color: #555; border-left: 4px solid #bdc3c7; padding-left: 10px; margin-top: 1.2em;">Skill List Management</h4>
-
-![Skill List](docs/assets.md/skill列表.gif)
+<div align="center">
+  <table width="100%" align="center" style="width:100%; table-layout:fixed;">
+    <tr>
+      <td align="center" width="50%">
+        <img src="docs/assets.md/发送命令.gif" alt="Send Commands" width="100%"/>
+      </td>
+      <td align="center" width="50%">
+        <img src="docs/assets.md/打码显示.gif" alt="Masking Display" width="100%"/>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" width="50%">
+        <img src="docs/assets.md/通知.gif" alt="Notification Alerts" width="100%"/>
+      </td>
+      <td align="center" width="50%">
+        <img src="docs/assets.md/skill列表.gif" alt="Skill List Management" width="100%"/>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ---
 
