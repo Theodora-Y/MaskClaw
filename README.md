@@ -241,44 +241,23 @@ MaskClaw 在不改动 AutoGLM、OpenClaw 等第三方 Agent 任何代码的前�
 MaskClaw 提供简洁直观的 Web 界面，实时展示隐私保护状态与操作记录。
 
 <div align="center">
-  <table width="100%" align="center" style="width:100%; table-layout:fixed;">
-    <tr>
-      <td align="center" width="50%" style="padding: 8px; background-color: #F9FAFB;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="发送命令">
-          <rect x="0" y="0" width="600" height="56" rx="10" fill="#0A66C2"/>
-          <text x="300" y="37" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="22" font-weight="900" fill="#FFFFFF">🚀 发送命令</text>
-        </svg>
-        <div style="height: 10px;"></div>
-        <img src="docs/assets.md/发送命令.gif" alt="发送命令" width="100%" style="border-radius: 8px; border: 2px solid #E8F0FE;"/>
-      </td>
-      <td align="center" width="50%" style="padding: 8px; background-color: #F9FAFB;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="打码显示">
-          <rect x="0" y="0" width="600" height="56" rx="10" fill="#6366F1"/>
-          <text x="300" y="37" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="22" font-weight="900" fill="#FFFFFF">🎭 打码显示</text>
-        </svg>
-        <div style="height: 10px;"></div>
-        <img src="docs/assets.md/打码显示.gif" alt="打码显示" width="100%" style="border-radius: 8px; border: 2px solid #EEF2FF;"/>
-      </td>
-    </tr>
-    <tr>
-      <td align="center" width="50%" style="padding: 8px; background-color: #F3F4F6;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="通知提醒">
-          <rect x="0" y="0" width="600" height="56" rx="10" fill="#F59E0B"/>
-          <text x="300" y="37" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="22" font-weight="900" fill="#FFFFFF">🔔 通知提醒</text>
-        </svg>
-        <div style="height: 10px;"></div>
-        <img src="docs/assets.md/通知.gif" alt="通知提醒" width="100%" style="border-radius: 8px; border: 2px solid #FEF3C7;"/>
-      </td>
-      <td align="center" width="50%" style="padding: 8px; background-color: #F3F4F6;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="Skill 列表管理">
-          <rect x="0" y="0" width="600" height="56" rx="10" fill="#10B981"/>
-          <text x="300" y="37" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="22" font-weight="900" fill="#FFFFFF">🧬 Skill 列表管理</text>
-        </svg>
-        <div style="height: 10px;"></div>
-        <img src="docs/assets.md/skill列表.gif" alt="Skill 列表管理" width="100%" style="border-radius: 8px; border: 2px solid #D1FAE5;"/>
-      </td>
-    </tr>
-  </table>
+
+### 🚀 发送命令
+
+![发送命令](docs/assets.md/发送命令.gif)
+
+### 🎭 打码显示
+
+![打码显示](docs/assets.md/打码显示.gif)
+
+### 🔔 通知提醒
+
+![通知提醒](docs/assets.md/通知.gif)
+
+### 🧬 Skill 列表管理
+
+![Skill 列表管理](docs/assets.md/skill列表.gif)
+
 </div>
 
 ---
