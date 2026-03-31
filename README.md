@@ -31,11 +31,6 @@
   <strong>端侧隐私守卫</strong> | <strong>自进化规则引擎</strong> | <strong>人机协作确认</strong>
 </p>
 
----
-
-[简体中文](README.md) | [English](README_EN.md)
-
----
 
 OpenClaw 等端侧 Agent 框架让手机自动完成填表、发消息、传文件成为现实。
 **MaskClaw** 是专为这类 Agent 设计的隐私守卫层——在 Agent 执行操作前介入，判断这个动作该不该做、该怎么做，且所有推理全部在设备本地完成，**数据不出端**。

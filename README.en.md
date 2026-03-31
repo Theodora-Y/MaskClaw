@@ -31,11 +31,6 @@
   <strong>On-Device Privacy Guardian</strong> | <strong>Self-Evolving Rule Engine</strong> | <strong>Human-in-the-Loop Confirmation</strong>
 </p>
 
----
-
-[简体中文](README.md) | [English](README_EN.md)
-
----
 
 OpenClaw and similar on-device Agent frameworks make it possible for phones to automatically fill forms, send messages, and transfer files.
 **MaskClaw** is a privacy guardian layer specifically designed for these Agents — it intervenes before an Agent executes an operation, determining whether the action should be taken and how, with all reasoning performed entirely on the local device, ensuring **data never leaves the edge**.
