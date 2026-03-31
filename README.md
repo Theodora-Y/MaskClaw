@@ -7,10 +7,9 @@
 ### 基于端侧模型自进化规则抽取的个性化隐私保护框架
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![MiniCPM](https://img.shields.io/badge/MiniCPM-V-4.5-FF6B6B?style=for-the-badge&logo=box&logoColor=white)]()
-[![FastAPI](https://img.shields.io/badge/FastAPI-08080-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0055-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)]()
-[![Data](https://img.shields.io/badge/Data-端侧处理-10B981?style=for-the-badge)]()
+[![Privacy](https://img.shields.io/badge/Privacy-端侧处理-10B981?style=for-the-badge)]()
 
 ---
 
