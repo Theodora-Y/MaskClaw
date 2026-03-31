@@ -244,18 +244,34 @@ MaskClaw 提供简洁直观的 Web 界面，实时展示隐私保护状态与操
   <table width="100%" align="center" style="width:100%; table-layout:fixed;">
     <tr>
       <td align="center" width="50%">
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="84" viewBox="0 0 600 84" role="img" aria-label="发送命令">
+          <rect x="0" y="0" width="600" height="84" rx="12" fill="#0A66C2"/>
+          <text x="300" y="54" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#FFFFFF">发送命令</text>
+        </svg>
         <img src="docs/assets.md/发送命令.gif" alt="发送命令" width="100%"/>
       </td>
       <td align="center" width="50%">
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="84" viewBox="0 0 600 84" role="img" aria-label="打码显示">
+          <rect x="0" y="0" width="600" height="84" rx="12" fill="#0A66C2"/>
+          <text x="300" y="54" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#FFFFFF">打码显示</text>
+        </svg>
         <img src="docs/assets.md/打码显示.gif" alt="打码显示" width="100%"/>
       </td>
     </tr>
     <tr>
       <td align="center" width="50%">
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="84" viewBox="0 0 600 84" role="img" aria-label="通知提醒">
+          <rect x="0" y="0" width="600" height="84" rx="12" fill="#0A66C2"/>
+          <text x="300" y="54" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#FFFFFF">通知提醒</text>
+        </svg>
         <img src="docs/assets.md/通知.gif" alt="通知提醒" width="100%"/>
       </td>
       <td align="center" width="50%">
-        <img src="docs/assets.md/skill列表.gif" alt="Skill列表管理" width="100%"/>
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="84" viewBox="0 0 600 84" role="img" aria-label="Skill 列表管理">
+          <rect x="0" y="0" width="600" height="84" rx="12" fill="#0A66C2"/>
+          <text x="300" y="54" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif" font-size="22" font-weight="700" fill="#FFFFFF">Skill 列表管理</text>
+        </svg>
+        <img src="docs/assets.md/skill列表.gif" alt="Skill 列表管理" width="100%"/>
       </td>
     </tr>
   </table>
