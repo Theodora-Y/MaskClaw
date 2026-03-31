@@ -37,7 +37,7 @@ OpenClaw and similar on-device Agent frameworks make it possible for phones to a
 
 ---
 
-## Table of Contents
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Table of Contents</h2>
 
 - [Project Overview](#project-overview)
 - [Core Pain Points](#core-pain-points)
@@ -55,7 +55,7 @@ OpenClaw and similar on-device Agent frameworks make it possible for phones to a
 
 ---
 
-## Project Overview
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Project Overview</h2>
 
 **MaskClaw** is a **self-evolving rule extraction framework** for **on-device Agent privacy protection**. It is not a traditional data encryption or content filtering tool; instead, it performs **in-process mediation** before an Agent executes an operation: identifying sensitive information, assessing operation risks, intelligently masking data, and continuously optimizing protection policies based on user behavioral feedback.
 
@@ -63,7 +63,7 @@ OpenClaw and similar on-device Agent frameworks make it possible for phones to a
 
 In MaskClaw, **three core modules work in coordination**, simulating the role of a real-world privacy guardian to collaboratively complete tasks such as **visual masking, behavior monitoring, and rule evolution**. The framework includes built-in **retrieval-augmented cognitive mechanisms (rule knowledge base + behavioral memory)** and **feedback-driven evolutionary learning**, enabling the system to adaptively optimize intervention strategies over time.
 
-### Core Values
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Core Values</h3>
 
 | Value Dimension | Description |
 |:---|:---|
@@ -74,23 +74,23 @@ In MaskClaw, **three core modules work in coordination**, simulating the role of
 
 ---
 
-## Core Pain Points
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Core Pain Points</h2>
 
 The more powerful on-device Agents become at automation, the larger the privacy attack surface. Existing protection solutions fall behind on three levels:
 
-### 🔍 Perception Layer: Format Recognition Only, No Intent Understanding
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">🔍 Perception Layer: Format Recognition Only, No Intent Understanding</h3>
 
 Formatted data like ID card numbers and bank card numbers can be intercepted by existing tools. But the truly dangerous operations Agents perform often have no fixed format — sending screenshots to strangers, entering real addresses where they shouldn't, uploading internal files to external platforms.
 
 > **These behaviors can never be detected by regex matching.**
 
-### 👤 Adaptation Layer: Public Rules Only, No Personal Rules
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">👤 Adaptation Layer: Public Rules Only, No Personal Rules</h3>
 
 Everyone has different privacy boundaries; the same field may have completely different sensitivity levels depending on profession and scenario. Existing solutions provide a one-size-fits-all minimum standard, rather than personalized protection that dynamically adjusts to user habits.
 
 > **Rules are rigid and cannot adapt to individuals.**
 
-### ☁️ Architecture Layer: Cloud Auditing is Itself a Leak
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">☁️ Architecture Layer: Cloud Auditing is Itself a Leak</h3>
 
 Uploading screen content to the cloud for semantic judgment is not permitted under compliance requirements in many industries, and creates a paradox for individual users: "sacrificing privacy to protect privacy."
 
@@ -98,9 +98,9 @@ Uploading screen content to the cloud for semantic judgment is not permitted und
 
 ---
 
-## System Architecture
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">System Architecture</h2>
 
-### Thin Client + Fat Server + Skill-Use Rule Scheduling Microservice Architecture
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Thin Client + Fat Server + Skill-Use Rule Scheduling Microservice Architecture</h3>
 
 MaskClaw intervenes in an Agent's execution chain through **Hooking** without modifying any code in third-party Agents like AutoGLM or OpenClaw.
 
@@ -118,13 +118,13 @@ MaskClaw intervenes in an Agent's execution chain through **Hooking** without mo
 
 </details>
 
-### Workflow
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Workflow</h3>
 
 ```
 📸 On-device screenshot → 🔍 PII Detection → 🧠 RAG Retrieval → ⚖️ Risk Judgment → 🎭 Visual Masking → ✅ Safe Forward
 ```
 
-### Transparent to Third-Party Agents
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Transparent to Third-Party Agents</h3>
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -147,9 +147,9 @@ MaskClaw intervenes in an Agent's execution chain through **Hooking** without mo
 
 ---
 
-## Three Core Modules
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Three Core Modules</h2>
 
-### 🎭 Smart Masker
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">🎭 Smart Masker</h3>
 
 **Intelligent Visual Masking Module**, uses RapidOCR to identify sensitive text regions in images and performs local desensitization.
 
@@ -157,7 +157,7 @@ MaskClaw intervenes in an Agent's execution chain through **Hooking** without mo
 - RapidOCR high-performance millisecond-level text recognition
 - Data never leaves the device throughout the process
 
-### 📊 Behavior Monitor
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">📊 Behavior Monitor</h3>
 
 **Behavior Monitoring Module**, continuously listens to Agent operation behaviors and captures user intervention actions.
 
@@ -165,7 +165,7 @@ MaskClaw intervenes in an Agent's execution chain through **Hooking** without mo
 - Provides data foundation for rule evolution
 - Supports session trajectory tracking
 
-### 🧬 Skill Evolution
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">🧬 Skill Evolution</h3>
 
 **Rule Self-Evolution Module**, continuously optimizes SOPs from correction logs based on hill climbing.
 
@@ -175,9 +175,9 @@ MaskClaw intervenes in an Agent's execution chain through **Hooking** without mo
 
 ---
 
-## Design Highlights
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Design Highlights</h2>
 
-### 🔒 Lightweight On-Device Model — Hardcore Guarantee for Data Not Leaving Edge
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">🔒 Lightweight On-Device Model — Hardcore Guarantee for Data Not Leaving Edge</h3>
 
 Semantic reasoning is handled by **MiniCPM-V 4.5**, and with 9B parameters, it can be locally deployed on consumer-grade devices. Sensitive information identification and visual blur processing are all completed locally without relying on network connections.
 
@@ -188,7 +188,7 @@ Semantic reasoning is handled by **MiniCPM-V 4.5**, and with 9B parameters, it c
 | Masking Processing | OpenCV | Local visual processing, zero upload |
 | Rule Retrieval | ChromaDB | Efficient vector similarity search |
 
-### 🧬 Self-Evolving Experience Base — Rules Grow from User Behaviors
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">🧬 Self-Evolving Experience Base — Rules Grow from User Behaviors</h3>
 
 Rules are not statically maintained lists; they are continuously extracted from real user behaviors and automatically deployed after sandbox verification.
 
@@ -198,7 +198,7 @@ User Behavior → Behavior Log → Pattern Recognition → Rule Extraction → S
                                                                     Human Review Gate
 ```
 
-### 🤝 Human-in-the-Loop Confirmation — Five-Level Confidence Smart Judgment
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">🤝 Human-in-the-Loop Confirmation — Five-Level Confidence Smart Judgment</h3>
 
 The system has clear confidence level classification for its judgments, with different strategies under different states:
 
@@ -212,7 +212,7 @@ The system has clear confidence level classification for its judgments, with dif
 
 > 💡 **This mechanism keeps the system usable during cold start**, rather than frequent false positives or missed detections.
 
-### 🔄 Collaborative Filtering — Group Wisdom Accelerates Personalized Convergence
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">🔄 Collaborative Filtering — Group Wisdom Accelerates Personalized Convergence</h3>
 
 | User Stage | Rule Source | Effect |
 |:---|:---|:---|
@@ -220,7 +220,7 @@ The system has clear confidence level classification for its judgments, with dif
 | Early Accumulation | Similar user group collaborative filtering | Fast convergence |
 | Stable Period | Personal behavior self-evolution | Precise personalization |
 
-### 📊 P-GUI-Evo Dataset — Industry's First Agent Privacy Benchmark
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">📊 P-GUI-Evo Dataset — Industry's First Agent Privacy Benchmark</h3>
 
 | Dimension | Spec |
 |:---|:---|
@@ -230,31 +230,31 @@ The system has clear confidence level classification for its judgments, with dif
 | Generalization Variants | Screenshot degradation, phrasing rewrites, DOM structure perturbation |
 | Judgment Labels | Allow / Block / Mask / Ask / Unsure |
 
-## Demo Screenshots
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Demo Screenshots</h2>
 
 MaskClaw provides a clean and intuitive web interface for real-time privacy protection status and operation records.
 
-#### Send Commands
+<h4 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1em; font-weight: bold; color: #555; border-left: 4px solid #bdc3c7; padding-left: 10px; margin-top: 1.2em;">Send Commands</h4>
 
 ![Send Commands](docs/assets.md/发送命令.gif)
 
-#### Masking Display
+<h4 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1em; font-weight: bold; color: #555; border-left: 4px solid #bdc3c7; padding-left: 10px; margin-top: 1.2em;">Masking Display</h4>
 
 ![Masking Display](docs/assets.md/打码显示.gif)
 
-#### Notification Alerts
+<h4 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1em; font-weight: bold; color: #555; border-left: 4px solid #bdc3c7; padding-left: 10px; margin-top: 1.2em;">Notification Alerts</h4>
 
 ![Notifications](docs/assets.md/通知.gif)
 
-#### Skill List Management
+<h4 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1em; font-weight: bold; color: #555; border-left: 4px solid #bdc3c7; padding-left: 10px; margin-top: 1.2em;">Skill List Management</h4>
 
 ![Skill List](docs/assets.md/skill列表.gif)
 
 ---
 
-## Performance Metrics
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Performance Metrics</h2>
 
-### Dataset Architecture
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Dataset Architecture</h3>
 
 | Dimension | Current (Experimental) | Description |
 |:---|---:|:---|
@@ -264,7 +264,7 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
 | Bucket Sizes | D1: 216, D2: 252, D3: 154 | Statistics based on final bucket list |
 | Judgment Labels | Allow/Block/Mask/Ask/Unsure | Aligned with policy execution behavior |
 
-### Expected Performance Indicators
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Expected Performance Indicators</h3>
 
 | Metric | Evaluation Bucket | Expected Target |
 |:---|---:|:---:|
@@ -278,7 +278,7 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
 
 ---
 
-## Comparison with Alternatives
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Comparison with Alternatives</h2>
 
 | Dimension | MaskClaw | Google DLP | Microsoft Presidio | Cloud LLM Audit |
 |:---|:---:|:---:|:---:|:---:|
@@ -289,7 +289,7 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
 | **Uncertainty Output** | ✅ **Unsure mechanism** | ❌ None | ❌ None | ❌ None |
 | **Agent Integration** | ✅ **Hooking zero modification** | ⚠️ Standalone service needs integration | ⚠️ Standalone service needs integration | ⚠️ API call needs integration |
 
-### Key Gaps
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Key Gaps</h3>
 
 1. **No existing solution can simultaneously achieve context awareness + data never leaving edge.** Cloud LLMs have sufficient semantic understanding capabilities, but screenshot upload is a hard constraint in compliance-sensitive scenarios; local solutions (Presidio, DLP on-premises) can stay offline but cannot handle semantic-level judgments. **MaskClaw is currently the only solution that completes semantic-level judgment on-device.**
 
@@ -297,7 +297,7 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
 
 ---
 
-## Use Cases
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Use Cases</h2>
 
 | Direction | Scenario Description | Core Value |
 |:---|:---|:---|
@@ -307,7 +307,7 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
 
 ---
 
-## Project Structure
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Project Structure</h2>
 
 ```
 MaskClaw/
@@ -379,35 +379,35 @@ MaskClaw/
 
 ---
 
-## Quick Start
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Quick Start</h2>
 
-### 1. Install Dependencies
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">1. Install Dependencies</h3>
 
 ```bash
 pip install chromadb rapidocr-onnxrunner onnxruntime pillow opencv-python \
             fastapi uvicorn requests transformers>=4.51.0 torch
 ```
 
-### 2. Start Model Service (Port 8000)
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">2. Start Model Service (Port 8000)</h3>
 
 ```bash
 cd model_server
 python minicpm_api.py
 ```
 
-### 3. Start Privacy Proxy Service (Port 8001)
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">3. Start Privacy Proxy Service (Port 8001)</h3>
 
 ```bash
 python api_server.py
 ```
 
-### 4. Verify Service Status
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">4. Verify Service Status</h3>
 
 ```bash
 curl http://127.0.0.1:8001/
 ```
 
-### 5. SSH Port Mapping
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">5. SSH Port Mapping</h3>
 
 ```bash
 ssh -L 8001:127.0.0.1:8001 root@server -N
@@ -415,9 +415,9 @@ ssh -L 8001:127.0.0.1:8001 root@server -N
 
 ---
 
-## API Reference
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">API Reference</h2>
 
-### Health Check
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Health Check</h3>
 
 ```bash
 # Privacy proxy service
@@ -427,7 +427,7 @@ curl http://localhost:8001/
 curl -X POST http://localhost:8000/chat -F "prompt=hello"
 ```
 
-### Process Screenshot (Returns Masked Image)
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Process Screenshot (Returns Masked Image)</h3>
 
 ```bash
 curl -X POST http://localhost:8001/process \
@@ -436,7 +436,7 @@ curl -X POST http://localhost:8001/process \
   -o output.jpg
 ```
 
-### Rule Management
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Rule Management</h3>
 
 ```bash
 # View all rules
@@ -450,7 +450,7 @@ curl -X POST http://localhost:8001/rules \
 
 ---
 
-## Documentation Index
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Documentation Index</h2>
 
 | Document | Content Description |
 |:---|:---|
@@ -462,7 +462,7 @@ curl -X POST http://localhost:8001/rules \
 
 ---
 
-## Ethical Statement
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Ethical Statement</h2>
 
 > ⚠️ **Please read before citing, deploying, or secondary development**
 >
@@ -474,7 +474,7 @@ curl -X POST http://localhost:8001/rules \
 
 ---
 
-## Support & Contact
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Support & Contact</h2>
 
 - 📂 **GitHub Repository**: [https://github.com/Theodora-Y/MaskClaw](https://github.com/Theodora-Y/MaskClaw)
 - 🐛 **Issue Reports**: [Issues Page](https://github.com/Theodora-Y/MaskClaw/issues)
@@ -482,7 +482,7 @@ curl -X POST http://localhost:8001/rules \
 
 ---
 
-## Citation
+<h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Citation</h2>
 
 ```bibtex
 @misc{maskclaw_2026,
