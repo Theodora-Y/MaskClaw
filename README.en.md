@@ -7,7 +7,7 @@
 </h1>
 
 <p align="center">
-  <a href="README.md">简体中文</a> | <a href="README_en.md">English</a>
+  <a href="README.md">简体中文</a> | <a href="README.en.md">English</a>
 </p>
 
 <p align="center">
@@ -310,7 +310,7 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
 
 <h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Key Gaps</h3>
 
-1. **No existing solution can simultaneously achieve context awareness + data never leaving edge.** Cloud LLMs have sufficient semantic understanding capabilities, but screenshot upload is a hard constraint in compliance-sensitive scenarios; local solutions (Presidio, DLP on-premises) can stay offline but cannot handle semantic-level judgments. **MaskClaw is currently the only solution that completes semantic-level judgment on-device.**
+1. **Among existing on-device solutions, MaskClaw offers deeper semantic understanding and self-evolution capabilities.** EdgeClaw can also keep data local in S2/S3 mode, but its semantic understanding relies on locally configured LLM rules, lacks semantic-level uncertainty output (Unsure mechanism), and requires manual rule maintenance without adaptive learning from user behavior. MaskClaw maintains on-device semantic judgment capability while introducing the **Unsure mechanism** for human-machine collaborative confirmation and a **self-evolving rule engine** for continuous personalized policy optimization.
 
 2. **No existing solution has rule self-evolution capability.** All comparison solutions require manually maintained rule bases and cannot learn from user behaviors. This is a fundamental flaw in scenarios where Agents deeply介入 user operations.
 
