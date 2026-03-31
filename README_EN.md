@@ -2,9 +2,13 @@
   <img src="docs/assets.md/logo_4x.png" width="80%" alt="MaskClaw Logo" />
 </p>
 
-<p align="center">A Self-Evolving Privacy Protection Framework via On-Device Rule Extraction</p>
+<h1 align="center" style="font-family: Georgia, 'Times New Roman', serif; font-weight: bold;">
+  A Self-Evolving Privacy Protection Framework via On-Device Rule Extraction
+</h1>
 
-<p align="center">[简体中文](README.md) | [English](README_EN.md)</p>
+<p align="center">
+  <a href="README.md">简体中文</a> | <a href="README_EN.md">English</a>
+</p>
 
 <p align="center">
   <a href="https://www.python.org/">
