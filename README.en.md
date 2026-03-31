@@ -243,23 +243,39 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
 <div align="center">
   <table width="100%" align="center" style="width:100%; table-layout:fixed;">
     <tr>
-      <td align="center" width="50%">
-        <img src="docs/assets.md/title-Send_Commands.png" alt="Send Commands" width="100%"/>
-        <img src="docs/assets.md/发送命令.gif" alt="Send Commands" width="100%"/>
+      <td align="center" width="50%" style="padding: 8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="Send Commands">
+          <rect x="0" y="0" width="600" height="56" rx="10" fill="#0A66C2"/>
+          <text x="300" y="37" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">🚀 Send Commands</text>
+        </svg>
+        <div style="height: 10px;"></div>
+        <img src="docs/assets.md/发送命令.gif" alt="Send Commands" width="100%" style="border-radius: 8px; border: 2px solid #E8F0FE;"/>
       </td>
-      <td align="center" width="50%">
-        <img src="docs/assets.md/title-Masking_Display.png" alt="Masking Display" width="100%"/>
-        <img src="docs/assets.md/打码显示.gif" alt="Masking Display" width="100%"/>
+      <td align="center" width="50%" style="padding: 8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="Masking Display">
+          <rect x="0" y="0" width="600" height="56" rx="10" fill="#6366F1"/>
+          <text x="300" y="37" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">🎭 Masking Display</text>
+        </svg>
+        <div style="height: 10px;"></div>
+        <img src="docs/assets.md/打码显示.gif" alt="Masking Display" width="100%" style="border-radius: 8px; border: 2px solid #EEF2FF;"/>
       </td>
     </tr>
     <tr>
-      <td align="center" width="50%">
-        <img src="docs/assets.md/title-Notification_Alerts.png" alt="Notification Alerts" width="100%"/>
-        <img src="docs/assets.md/通知.gif" alt="Notification Alerts" width="100%"/>
+      <td align="center" width="50%" style="padding: 8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="Notification Alerts">
+          <rect x="0" y="0" width="600" height="56" rx="10" fill="#F59E0B"/>
+          <text x="300" y="37" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">🔔 Notification Alerts</text>
+        </svg>
+        <div style="height: 10px;"></div>
+        <img src="docs/assets.md/通知.gif" alt="Notification Alerts" width="100%" style="border-radius: 8px; border: 2px solid #FEF3C7;"/>
       </td>
-      <td align="center" width="50%">
-        <img src="docs/assets.md/title-Skill_List_Management.png" alt="Skill List Management" width="100%"/>
-        <img src="docs/assets.md/skill列表.gif" alt="Skill List Management" width="100%"/>
+      <td align="center" width="50%" style="padding: 8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="56" viewBox="0 0 600 56" role="img" aria-label="Skill List Management">
+          <rect x="0" y="0" width="600" height="56" rx="10" fill="#10B981"/>
+          <text x="300" y="37" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#FFFFFF">🧬 Skill List Management</text>
+        </svg>
+        <div style="height: 10px;"></div>
+        <img src="docs/assets.md/skill列表.gif" alt="Skill List Management" width="100%" style="border-radius: 8px; border: 2px solid #D1FAE5;"/>
       </td>
     </tr>
   </table>
