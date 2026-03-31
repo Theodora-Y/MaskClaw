@@ -11,7 +11,7 @@
 | 文档 | 说明 |
 |:---|:---|
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 系统整体工作流与端云协同架构 |
-| [docs/SKILLS_API.md](docs/SKILLS_API.md) | 四大核心 Skills (PII_Detection, Smart_Masker, Behavior_Monitor, Skill_Evolution) 的输入输出契约 |
+| [docs/SKILLS_API.md](docs/SKILLS_API.md) | 三大核心 Skills (Smart_Masker, Behavior_Monitor, Skill_Evolution) 的输入输出契约 |
 | [docs/RAG_SCHEMA.md](docs/RAG_SCHEMA.md) | 本地 ChromaDB 向量数据库的存储范式与元数据设计 |
 | [docs/PROMPT_TEMPLATES.md](docs/PROMPT_TEMPLATES.md) | 端侧 LLM 进行推理、Critique 及代码补丁生成的 Prompt 模板 |
 
@@ -46,9 +46,17 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-## 5. Agent 行为约束
+## 5. 三大核心 Skills
 
-### 5.1 工具调用优先原则
+| Skill | 功能 | 核心能力 |
+|:---|:---|:---|
+| **🎭 Smart_Masker** | 智能视觉打码 | 基于 RapidOCR 识别敏感文本，支持高斯模糊/马赛克/色块覆盖 |
+| **📊 Behavior_Monitor** | 行为监控 | 持续监听 Agent 操作，捕获用户主动干预动作 |
+| **🧬 Skill_Evolution** | 规则自进化 | 基于爬山法持续优化 SOP，沙盒测试验证后自动挂载 |
+
+## 6. Agent 行为约束
+
+### 6.1 工具调用优先原则
 
 > **严禁在业务逻辑中直接硬编码拦截策略。所有拦截逻辑必须封装为独立的 Skill，并由 LLM 动态调用。**
 
@@ -68,34 +76,34 @@ decision = await llm_router.decide(
 await skills[decision.skill].execute(decision.params)
 ```
 
-### 5.2 端侧闭环原则
+### 6.2 端侧闭环原则
 
 > **任何涉及用户隐私的计算（OCR、打码、行为归纳）必须在端侧设备完成，严禁将原始截图与未脱敏数据上传云端。**
 
 **原因**：云端处理存在隐私泄露风险，不满足医疗、金融等行业合规要求。
 
 **正确做法**：
-- PII 检测在端侧完成
+- RapidOCR 识别在端侧完成
 - 视觉打码在端侧完成
 - 行为分析在端侧完成
 - 仅将脱敏后的结果发送给云端
 
-### 5.3 防御先于执行原则
+### 6.3 防御先于执行原则
 
-> **Agent 必须确保在转发数据前，已完成所有的 PII_Detection 与 Smart_Masker 任务。**
+> **Agent 必须确保在转发数据前，已完成所有的 Smart_Masker 打码任务。**
 
 **执行顺序**：
 ```
 1. 截获 Agent 请求
-2. 执行 PII_Detection
+2. 执行 PII 检测
 3. 执行 Smart_Masker（如需要）
 4. 更新 RAG 规则（如需要）
 5. 转发脱敏数据给云端 Agent
 ```
 
-### 5.4 沙盒验证规范
+### 6.4 沙盒验证规范
 
-> **L3 层自进化生成的新技能或补丁，必须通过 `sandbox/regression_test.py` 测试后方可投入使用，防止策略坍塌。**
+> **L3 层自进化生成的新技能或补丁，必须通过沙盒测试后方可投入使用，防止策略坍塌。**
 
 **验证流程**：
 ```
@@ -112,7 +120,7 @@ await skills[decision.skill].execute(decision.params)
 全量上线
 ```
 
-### 5.5 防御链路幂等性
+### 6.5 防御链路幂等性
 
 > **同一页面若多次触发拦截，需通过 RAG 语义去重，避免重复存储冗余的个性化规则。**
 
@@ -121,7 +129,7 @@ await skills[decision.skill].execute(decision.params)
 - 新规则与现有规则冲突时，标记冲突并进入审核流程
 - 定期执行规则库清理，合并相似规则
 
-## 6. 五大核心约束
+## 7. 五大核心约束
 
 | 约束 | 说明 | 违规风险 |
 |:---|:---|:---|
@@ -131,21 +139,21 @@ await skills[decision.skill].execute(decision.params)
 | **沙盒验证** | 新规则需测试验证 | 策略坍塌风险 |
 | **语义去重** | 规则库无冗余 | 规则膨胀，性能下降 |
 
-## 7. 快速入门
+## 8. 快速入门
 
-### 7.1 环境初始化
+### 8.1 环境初始化
 
 确认模型服务已启动（`model_server/minicpm_api.py`），确保端侧算力节点就绪。
 
-### 7.2 连接验证
+### 8.2 连接验证
 
-通过测试脚本调用 `PII_Detection_Skill` 和 `Smart_Masker_Skill`，验证端侧打码功能是否正常回传安全截图。
+通过测试脚本调用 `Smart_Masker` 和 `Behavior_Monitor`，验证端侧打码功能是否正常回传安全截图。
 
-### 7.3 闭环测试
+### 8.3 闭环测试
 
-手动触发一个用户纠偏动作（如：删除 Agent 误填的隐私信息），观察 `Behavior_Monitor_Skill` 是否成功记录，并等待后续 `Skill_Evolution` 自动生成新规则。
+手动触发一个用户纠偏动作（如：删除 Agent 误填的隐私信息），观察 `Behavior_Monitor` 是否成功记录，并等待后续 `Skill_Evolution` 自动生成新规则。
 
-## 8. 常见问题
+## 9. 常见问题
 
 ### Q1: 何时触发 Skill_Evolution？
 

@@ -1,146 +1,140 @@
 # Skills API 文档
 
-本文档定义了 MaskClaw 框架中四大核心 Skills 的输入输出契约。
+本文档定义了 MaskClaw 框架中三大核心 Skills 的输入输出契约。
 
 ## 目录
 
-- [1. PII_Detection](#1-pii_detection)
-- [2. Smart_Masker](#2-smart_masker)
-- [3. Behavior_Monitor](#3-behavior_monitor)
-- [4. Skill_Evolution](#4-skill_evolution)
+- [1. Smart Masker](#1-smart-masker)
+- [2. Behavior Monitor](#2-behavior-monitor)
+- [3. Skill Evolution](#3-skill-evolution)
 
 ---
 
-## 1. PII_Detection
+## 1. Smart Masker
 
-**隐私信息检测模块**，负责识别图片中的格式化敏感信息。
+**智能视觉打码模块**，基于 RapidOCR 识别敏感文本区域并进行视觉脱敏处理。
 
-### 1.1 输入
+### 1.1 类：`VisualMasker`
 
-| 字段 | 类型 | 必填 | 说明 |
-|:---|:---:|:---:|:---|
-| `image` | `str` | ✅ | Base64 编码的图片数据 |
-| `mode` | `str` | ❌ | 检测模式：`fast`（默认，快速检测）或 `full`（完整检测，含语义判断） |
+```python
+from skills.smart_masker import VisualMasker
 
-### 1.2 输出
+masker = VisualMasker()
+result = masker.process_image(image_path, sensitive_keywords)
+```
+
+### 1.2 方法
+
+#### `process_image(image_path, sensitive_keywords, method='blur')`
+
+对图片中的敏感区域进行打码处理。
+
+| 参数 | 类型 | 必填 | 说明 |
+|:---|:---|:---:|:---|
+| `image_path` | `str` | ✅ | 图片路径或 Base64 编码的图片 |
+| `sensitive_keywords` | `List[str]` | ✅ | 敏感关键词列表 |
+| `method` | `str` | ❌ | 打码方式：`blur`（高斯模糊，默认）/ `mosaic`（马赛克）/ `block`（色块） |
+
+### 1.3 返回值
 
 ```json
 {
   "success": true,
-  "detections": [
+  "masked_image_path": "temp/masked_xxx.jpg",
+  "detected_regions": [
     {
-      "type": "phone_number",
-      "value": "138****8888",
-      "confidence": 0.95,
+      "text": "13812345678",
       "bbox": [x1, y1, x2, y2],
-      "reason": "11位手机号格式"
-    },
-    {
-      "type": "id_card",
-      "value": "110***********1234",
-      "confidence": 0.88,
-      "bbox": [x1, y1, x2, y2],
-      "reason": "身份证号格式"
+      "keyword_matched": "手机号"
     }
   ],
-  "summary": {
-    "total_detections": 2,
-    "high_confidence_count": 2,
-    "requires_masking": true
-  }
+  "regions_count": 1,
+  "processing_time_ms": 45
 }
 ```
 
-### 1.3 检测类型
+### 1.4 核心能力
 
-| 类型 | 说明 | 检测方法 |
-|:---|:---|:---|
-| `phone_number` | 手机号码 | 正则 + OCR |
-| `id_card` | 身份证号 | 正则 + OCR |
-| `bank_card` | 银行卡号 | Luhn算法 + OCR |
-| `address` | 家庭住址 | 语义识别 |
-| `name` | 姓名 | 语义识别 |
-| `email` | 邮箱 | 正则 + OCR |
-| `password` | 密码字段 | UI标签识别 |
-| `custom` | 自定义规则 | 用户规则库 |
+| 能力 | 说明 |
+|:---|:---|
+| **RapidOCR 识别** | 高性能 OCR 引擎，毫秒级文本检测与识别 |
+| **语义相似匹配** | 支持模糊匹配，关键词部分匹配也能识别 |
+| **多种打码方式** | 高斯模糊、马赛克、色块覆盖 |
+| **坐标精确定位** | 返回打码区域坐标，便于后续处理 |
+
+### 1.5 示例
+
+```python
+from skills.smart_masker import VisualMasker
+
+masker = VisualMasker()
+
+# 敏感关键词列表
+keywords = ["手机号", "身份证", "银行卡", "密码"]
+
+# 处理图片
+result = masker.process_image(
+    image_path="test.jpg",
+    sensitive_keywords=keywords,
+    method="blur"
+)
+
+print(f"检测到 {result['regions_count']} 个敏感区域")
+print(f"脱敏图片已保存至: {result['masked_image_path']}")
+```
 
 ---
 
-## 2. Smart_Masker
+## 2. Behavior Monitor
 
-**智能视觉打码模块**，对敏感区域进行本地模糊处理。
+**行为监控模块**，标准化所有事件到共享 Schema，捕获用户参与的操作行为。
 
-### 2.1 输入
+### 2.1 类：`BehaviorMonitor`
 
-| 字段 | 类型 | 必填 | 说明 |
-|:---|:---:|:---:|:---|
-| `image` | `str` | ✅ | Base64 编码的原始图片 |
-| `regions` | `List[Dict]` | ✅ | 需要打码的区域列表 |
-| `method` | `str` | ❌ | 打码方式：`mosaic`（马赛克，默认）/ `blur`（高斯模糊）/ `block`（色块覆盖） |
-| `intensity` | `int` | ❌ | 打码强度 1-10，默认 5 |
+```python
+from skills.behavior_monitor import BehaviorMonitor
 
-### 2.2 regions 格式
-
-```json
-[
-  {
-    "bbox": [x1, y1, x2, y2],
-    "reason": "phone_number",
-    "priority": 1
-  },
-  {
-    "bbox": [x1, y1, x2, y2],
-    "reason": "id_card",
-    "priority": 1
-  }
-]
+monitor = BehaviorMonitor()
 ```
 
-### 2.3 输出
-
-```json
-{
-  "success": true,
-  "masked_image": "<base64_encoded_image>",
-  "regions_processed": 2,
-  "processing_time_ms": 45,
-  "method_used": "mosaic"
-}
-```
-
-### 2.4 打码方法对比
-
-| 方法 | 效果 | 适用场景 | 性能 |
-|:---|:---|:---|:---|
-| `mosaic` | 马赛克模糊 | 大面积区域 | ⚡ 最快 |
-| `blur` | 高斯模糊 | 文字区域 | ⚡ 快 |
-| `block` | 色块覆盖 | 强隐私区域 | ⚡⚡⚡ 最快 |
-
----
-
-## 3. Behavior_Monitor
-
-**行为监控模块**，持续监听 Agent 操作行为，捕获用户主动干预动作。
-
-### 3.1 输入
-
-| 字段 | 类型 | 必填 | 说明 |
-|:---|:---:|:---:|:---|
-| `session_id` | `str` | ✅ | 会话 ID |
-| `action_type` | `str` | ✅ | 动作类型 |
-| `action_data` | `Dict` | ❌ | 动作详情 |
-
-### 3.2 action_type 类型
+### 2.2 日志类型
 
 | 类型 | 说明 |
 |:---|:---|
-| `agent_operation` | Agent 发起操作 |
-| `user_correction` | 用户主动修正 |
-| `user_rejection` | 用户拒绝操作 |
-| `user_override` | 用户覆盖操作 |
-| `user_feedback` | 用户反馈 |
+| `behavior_log.jsonl` | 用户未参与的操作日志（level=1） |
+| `correction_log.jsonl` | 用户参与的操作日志（level=2） |
+| `session_trace.jsonl` | 结构化行为链（v2.0 新格式） |
 
-### 3.3 输出
+### 2.3 核心方法
+
+#### `log_action(event_type, session_id, action_data)`
+
+记录一次行为事件。
+
+```python
+monitor.log_action(
+    event_type="user_correction",
+    session_id="sess_abc123",
+    action_data={
+        "action_type": "fill_form",
+        "field": "phone_number",
+        "proposed_value": "13812345678",
+        "was_corrected": True,
+        "correction_type": "user_override",
+        "user_corrected_value": "138****8888"
+    }
+)
+```
+
+#### `get_session_trace(scenario_tag)`
+
+获取指定场景的行为链。
+
+```python
+trace = monitor.get_session_trace(scenario_tag="微信好友验证")
+```
+
+### 2.4 返回值
 
 ```json
 {
@@ -152,81 +146,93 @@
 }
 ```
 
-### 3.4 日志流格式
+### 2.5 过期时间配置
 
-```json
-{
-  "timestamp": 1711867260000,
-  "session_id": "sess_abc123",
-  "user_id": "user_001",
-  "action": "agent_operation",
-  "details": {
-    "action_type": "fill_form",
-    "field": "phone_number",
-    "proposed_value": "13812345678",
-    "was_corrected": true,
-    "correction_type": "user_override",
-    "user_corrected_value": "138****8888"
-  },
-  "context": {
-    "app": "wechat",
-    "scenario": "friend_verification"
-  }
-}
-```
+| 操作类型 | 默认过期时间 |
+|:---|:---|
+| `allow` | 24 小时 |
+| `block` | 24 小时 |
+| `mask` | 24 小时 |
+| `ask` | 7 天 |
 
 ---
 
-## 4. Skill_Evolution
+## 3. Skill Evolution
 
-**规则自进化模块**，从纠错日志中智能抽取新规则，经沙盒测试验证后自动挂载上线。
+**SOP 自进化模块**，基于爬山法持续优化 SOP（标准操作流程）。
 
-### 4.1 输入
+### 3.1 核心流程（爬山法）
 
-| 字段 | 类型 | 必填 | 说明 |
-|:---|:---:|:---:|:---|
-| `logs` | `List[Dict]` | ✅ | 行为日志列表 |
-| `mode` | `str` | ❌ | 进化模式：`auto`（自动）或 `manual`（人工审核） |
+```
+┌─────────────────────────────────────────────────────────────┐
+│  第 1 步：agent 对 skill 做一个小改动                       │
+│         （比如：加一条"必须核对输入数据"的规则）               │
+├─────────────────────────────────────────────────────────────┤
+│  第 2 步：用改动后的 skill 跑 10 个测试用例                  │
+├─────────────────────────────────────────────────────────────┤
+│  第 3 步：用 checklist 给每个输出打分                       │
+│         （4 个检查项全过 = 100 分，3 个过 = 75 分...）        │
+├─────────────────────────────────────────────────────────────┤
+│  第 4 步：算平均分                                          │
+│         - 比上一轮高 → 保留改动                              │
+│         - 比上一轮低 → 撤销改动                              │
+├─────────────────────────────────────────────────────────────┤
+│  第 5 步：重复，直到连续 3 轮分数超过 90% 或你喊停           │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### 4.2 输出
+### 3.2 子模块
+
+| 模块 | 说明 |
+|:---|:---|
+| **SemanticEvaluator** | LLM-as-a-Judge，快速验证逻辑 |
+| **ChecklistEvaluator** | 4项检查评分 |
+| **FinalSandbox** | 严格验证后发布 |
+
+### 3.3 数据库表
+
+| 表名 | 说明 |
+|:---|:---|
+| `session_trace` | 会话轨迹 |
+| `sop_draft` | SOP 草稿（多轮迭代） |
+| `sop_version` | 已发布版本 |
+
+### 3.4 核心方法
+
+#### `evolve_skill(skill_name, test_cases)`
+
+对指定 Skill 进行自进化优化。
+
+```python
+from skills.evolution_mechanic import EvolutionEngine
+
+engine = EvolutionEngine()
+
+result = engine.evolve_skill(
+    skill_name="smart_masker",
+    test_cases=[
+        {"input": "test1.jpg", "expected_keywords": ["手机号"]},
+        {"input": "test2.jpg", "expected_keywords": ["银行卡"]}
+    ]
+)
+```
+
+### 3.5 返回值
 
 ```json
 {
   "success": true,
   "evolution_result": {
-    "rules_generated": [
-      {
-        "id": "rule_user_001_20260331_01",
-        "scenario": "微信好友验证页",
-        "target_field": "手机号",
-        "pattern": "填写手机号用于好友验证",
-        "action": "mask",
-        "confidence": 0.85,
-        "source_logs": ["log_20260331_123456", "log_20260331_123457"],
-        "status": "pending_review"
-      }
+    "iterations": 5,
+    "final_score": 92.5,
+    "improvements": [
+      "添加了"模糊匹配"规则",
+      "优化了 OCR 识别精度"
     ],
-    "rules_updated": [],
-    "rules_deprecated": []
+    "new_version": "v1.3.0"
   },
-  "sandbox_test_required": true,
-  "estimated_review_time": "1-2 hours"
+  "passed_sandbox": true
 }
-```
-
-### 4.3 进化流程
-
-```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│  行为日志   │ → │  模式识别   │ → │  规则抽取   │ → │  沙盒测试   │
-│  Logs       │    │  Pattern    │    │  Rule Gen   │    │  Sandbox    │
-│             │    │  Mining      │    │             │    │  Test       │
-└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
-                                                                    ↓
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│  版本发布   │ ← │  人工审核   │ ← │  测试报告   │ ← │  测试执行   │
-│  Deploy     │    │  Review     │    │  Report     │    │  Execute    │
-└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
 ```
 
 ---
@@ -247,9 +253,9 @@
 
 | 错误码 | 说明 | 处理建议 |
 |:---:|:---|:---|
-| `PII_001` | 图片解码失败 | 检查图片格式 |
-| `PII_002` | 图片过大 | 压缩后重试 |
-| `MASK_001` | 区域坐标无效 | 检查 bbox 格式 |
+| `MASK_001` | 图片解码失败 | 检查图片格式 |
+| `MASK_002` | 图片过大 | 压缩后重试 |
+| `MASK_003` | OCR 识别失败 | 检查图片质量 |
 | `MONITOR_001` | 日志写入失败 | 检查存储权限 |
-| `EVOLUTION_001` | 规则生成失败 | 减少日志批次 |
+| `EVOLUTION_001` | 规则生成失败 | 减少测试用例批次 |
 | `EVOLUTION_002` | 沙盒测试超时 | 检查测试环境 |
