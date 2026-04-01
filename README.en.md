@@ -496,6 +496,7 @@ curl -X POST http://localhost:8001/rules \
 <h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">Support & Contact</h2>
 
 - 📂 **GitHub Repository**: [https://github.com/Theodora-Y/MaskClaw](https://github.com/Theodora-Y/MaskClaw)
+- 🛒 **ClawHub Plugin**: [https://clawhub.ai/theodora-y/maskclaw](https://clawhub.ai/theodora-y/maskclaw)
 - 🐛 **Issue Reports**: [Issues Page](https://github.com/Theodora-Y/MaskClaw/issues)
 - 💡 **Feature Suggestions**: [Discussions Page](https://github.com/Theodora-Y/MaskClaw/discussions)
 
