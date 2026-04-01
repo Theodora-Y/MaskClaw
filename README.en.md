@@ -510,7 +510,6 @@ curl -X POST http://localhost:8001/rules \
   author       = {Dongying Zheng and Yanqiu Zhao and Kaibo Huang and Yukun Wei and Zhongliang Yang and Linna Zhou},
   year         = {2026},
   howpublished = {https://github.com/Theodora-Y/MaskClaw},
-  url          = {https://huggingface.co/datasets/Keonq/P-GUI-Evo},
   note         = {GitHub repository}
 }
 ```

@@ -508,10 +508,9 @@ curl -X POST http://localhost:8001/rules \
 ```bibtex
 @misc{maskclaw_2026,
   title        = {MaskClaw: On-device Privacy-Preserving Framework with Self-Evolving Rule Extraction for Agent Systems},
-  author       = {郑东赢 and 赵延秋 and 黄凯博 and 魏钰坤 and 杨忠良 and 周琳娜},
+  author       = {Dongying Zheng and Yanqiu Zhao and Kaibo Huang and Yukun Wei and Zhongliang Yang and Linna Zhou},
   year         = {2026},
   howpublished = {https://github.com/Theodora-Y/MaskClaw},
-  url          = {https://huggingface.co/datasets/Keonq/P-GUI-Evo},
   note         = {GitHub repository}
 }
 ```
