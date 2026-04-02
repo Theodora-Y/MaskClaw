@@ -234,6 +234,8 @@ The system has clear confidence level classification for its judgments, with dif
 | Generalization Variants | Screenshot degradation, phrasing rewrites, DOM structure perturbation |
 | Judgment Labels | Allow / Block / Mask / Ask / Unsure |
 
+📥 **Dataset**: [https://huggingface.co/datasets/Keonq/P-GUI-Evo](https://huggingface.co/datasets/Keonq/P-GUI-Evo) | CC BY 4.0
+
 ---
 
 <h2>Demo Screenshots</h2>
@@ -282,6 +284,8 @@ MaskClaw provides a clean and intuitive web interface for real-time privacy prot
 | Buckets | D1/D2/D3 | Correspond to baseline, generalization, noise/new distribution stress |
 | Bucket Sizes | D1: 216, D2: 252, D3: 154 | Statistics based on final bucket list |
 | Judgment Labels | Allow/Block/Mask/Ask/Unsure | Aligned with policy execution behavior |
+
+📥 **Dataset Download**: [https://huggingface.co/datasets/Keonq/P-GUI-Evo](https://huggingface.co/datasets/Keonq/P-GUI-Evo) | CC BY 4.0
 
 <h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Expected Performance Indicators</h3>
 
@@ -510,6 +514,7 @@ curl -X POST http://localhost:8001/rules \
   author       = {Dongying Zheng and Yanqiu Zhao and Kaibo Huang and Yukun Wei and Zhongliang Yang and Linna Zhou},
   year         = {2026},
   howpublished = {https://github.com/Theodora-Y/MaskClaw},
+
   note         = {GitHub repository}
 }
 ```
