@@ -421,10 +421,7 @@ MaskClaw/
 │   │       ├── SKILL.md         # Skill definition
 │   │       └── rules.json       # Rules configuration
 │
-├── windows_sdk/                  # Windows SDK (AutoGLM integration)
-│
-└── models/                       # Local model files
-    └── OpenBMB/MiniCPM-V-4_5/  # MiniCPM-V 4.5 model weights
+└── windows_sdk/                  # Windows SDK (AutoGLM integration)
 
 ```
 

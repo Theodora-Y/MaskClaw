@@ -419,10 +419,7 @@ MaskClaw/
 │   │       ├── SKILL.md         # Skill 定义
 │   │       └── rules.json       # 规则配置
 │
-├── windows_sdk/                  # Windows SDK (AutoGLM 集成)
-│
-└── models/                       # 本地模型文件
-    └── OpenBMB/MiniCPM-V-4_5/   # MiniCPM-V 4.5 模型权重
+└── windows_sdk/                  # Windows SDK (AutoGLM 集成)
 
 ```
 
