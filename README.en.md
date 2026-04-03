@@ -122,7 +122,7 @@ MaskClaw supports **Enterprise Deployment** and **Personal Deployment** two mode
 > 
 > 💡 **Personal Users**: Recommend using Gemma 4 2B, lightweight model with no hardware threshold, protecting personal privacy anytime, anywhere.
 
-<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Thin Client + Fat Server + Skill-Use Rule Scheduling Microservice Architecture</h3>
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Perception-Cognition-Execution-Evolution Four-Layer Decoupled Architecture</h3>
 
 MaskClaw intervenes in an Agent's execution chain through **Hooking** without modifying any code in third-party Agents like AutoGLM or OpenClaw.
 

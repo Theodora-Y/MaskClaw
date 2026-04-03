@@ -122,7 +122,7 @@ MaskClaw 支持**企业级部署**与**个人部署**两种模式，用户可根
 > 
 > 💡 **个人用户**：推荐使用 Gemma 4 2B，轻量模型无硬件门槛，随时随地保护个人隐私。
 
-<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">瘦客户端 + 胖服务端 + Skill-Use 规则调度的微服务解耦架构</h3>
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">感知-认知-执行-进化四层解耦架构</h3>
 
 MaskClaw 在不改动 AutoGLM、OpenClaw 等第三方 Agent 任何代码的前提下，通过 **Hooking 机制**介入 Agent 的执行链路。
 
