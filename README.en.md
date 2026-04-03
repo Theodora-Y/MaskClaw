@@ -365,56 +365,66 @@ MaskClaw/
 │
 ├── docs/                         # Documentation
 │   ├── ARCHITECTURE.md           # System architecture
-│   ├── SKILLS_API.md             # Skills API documentation
-│   ├── RAG_SCHEMA.md             # RAG data schema
-│   ├── PROMPT_TEMPLATES.md       # Prompt template documentation
-│   ├── SESSION_TRACE_FORMAT.md   # Session trace format
-│   └── self_evolution_mechanism.md # Self-evolution mechanism
-│   
+│   ├── SKILLS_API.md            # Skills API documentation
+│   ├── RAG_SCHEMA.md            # RAG data schema
+│   ├── PROMPT_TEMPLATES.md      # Prompt template documentation
+│   ├── SESSION_TRACE_FORMAT.md  # Session trace format
+│   ├── self_evolution_mechanism.md  # Self-evolution mechanism
+│   └── assets.md/               # Static assets
 │
 ├── model_server/                 # Model service
-│   ├── minicpm_api.py            # MiniCPM-V vision model API (port 8000)
-│   ├── requirements.txt          # Model service dependencies
-│   └── memory/chroma_storage/   # ChromaDB data (runtime generated)
+│   ├── minicpm_api.py           # MiniCPM-V vision model API (port 8000)
+│   ├── ollama_api.py            # Ollama model service API (Gemma 4 support)
+│   ├── ollama_example.py        # Ollama usage example
+│   ├── requirements.txt         # Model service dependencies
+│   └── __init__.py
 │
-├── memory/                        # Memory storage
+├── memory/                       # Memory storage
 │   ├── chroma_manager.py        # ChromaDB manager
 │   ├── rag_client.py             # RAG retrieval client
 │   ├── log_processor.py          # Log processor
-│   └── chat_history_db.py        # Chat history storage
+│   ├── chat_history_db.py       # Chat history storage
+│   └── chroma_storage/           # ChromaDB data (runtime generated)
 │
-├── skills/                        # Built-in Skills (platform-level)
-│   ├── smart_masker.py          # 🎭 Visual masking module
+├── skills/                       # Built-in Skills (platform-level)
+│   ├── smart_masker.py           # 🎭 Visual masking module
 │   ├── behavior_monitor.py       # 📊 Behavior monitoring module
-│   └── evolution_mechanic.py    # 🧬 Self-evolution mechanism
+│   └── evolution_mechanic.py     # 🧬 Self-evolution mechanism
 │
-├── sandbox/                       # Sandbox testing
+├── sandbox/                      # Sandbox testing
 │   ├── sandbox_validator.py     # Sandbox validator
 │   ├── semantic_evaluator.py     # Semantic evaluator
-│   └── checklist_evaluator.py   # Checklist evaluator
+│   └── checklist_evaluator.py    # Checklist evaluator
 │
-├── prompts/                       # Prompt templates
+├── prompts/                      # Prompt templates
 │   ├── evolution_rule_extract.txt
 │   ├── evolution_skill_writing.txt
 │   ├── privacy_analysis.txt
 │   ├── relevance_assessment.txt
 │   └── retrieval_decision.txt
 │
-├── scripts/                       # Utility scripts
-│   ├── generate_skills.py        # Generate Skills
+├── scripts/                      # Utility scripts
+│   ├── generate_skills.py       # Generate Skills
 │   ├── migrate_logs_to_chains.py
-│   ├── seed_notifications.py    # Initialize notifications
 │   ├── seed_skills_db.py        # Initialize Skills database
-│   └── split_traces.py
+│   ├── split_traces.py
+│   └── download_ollama_models.sh
 │
 ├── skill_registry/               # Skills registry
 │   ├── __init__.py
 │   └── skill_db.py              # Skills database management
 │
 ├── user_skills/                  # User personalized Skills (L3 Evolution)
-│   
+│   ├── {user_id}/
+│   │   ├── manifest.json        # User Skills manifest
+│   │   └── {skill_name}/v{x}.{y}/
+│   │       ├── SKILL.md         # Skill definition
+│   │       └── rules.json       # Rules configuration
 │
-└── windows_sdk/                   # Windows SDK (AutoGLM integration)
+├── windows_sdk/                  # Windows SDK (AutoGLM integration)
+│
+└── models/                       # Local model files
+    └── OpenBMB/MiniCPM-V-4_5/  # MiniCPM-V 4.5 model weights
 
 ```
 

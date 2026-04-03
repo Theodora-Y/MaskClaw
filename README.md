@@ -363,57 +363,66 @@ MaskClaw/
 │
 ├── docs/                         # 文档目录
 │   ├── ARCHITECTURE.md           # 系统架构文档
-│   ├── SKILLS_API.md             # Skills API 文档
-│   ├── RAG_SCHEMA.md             # RAG 数据模式
-│   ├── PROMPT_TEMPLATES.md       # Prompt 模板文档
-│   ├── SESSION_TRACE_FORMAT.md   # 会话轨迹格式
-│   └── self_evolution_mechanism.md # 自进化机制文档
-│   
+│   ├── SKILLS_API.md            # Skills API 文档
+│   ├── RAG_SCHEMA.md            # RAG 数据模式
+│   ├── PROMPT_TEMPLATES.md      # Prompt 模板文档
+│   ├── SESSION_TRACE_FORMAT.md  # 会话轨迹格式
+│   ├── self_evolution_mechanism.md  # 自进化机制文档
+│   └── assets.md/               # 静态资源
 │
 ├── model_server/                 # 模型服务
-│   ├── minicpm_api.py            # MiniCPM-V 视觉模型 API (端口 8000)
-│   ├── requirements.txt          # 模型服务依赖
-│   └── memory/chroma_storage/   # ChromaDB 数据 (运行时生成)
+│   ├── minicpm_api.py           # MiniCPM-V 视觉模型 API (端口 8000)
+│   ├── ollama_api.py            # Ollama 模型服务 API (支持 Gemma 4)
+│   ├── ollama_example.py        # Ollama 使用示例
+│   ├── requirements.txt         # 模型服务依赖
+│   └── __init__.py
 │
-├── memory/                        # 记忆存储
-│   ├── chroma_manager.py        # ChromaDB 管理器
+├── memory/                       # 记忆存储
+│   ├── chroma_manager.py         # ChromaDB 管理器
 │   ├── rag_client.py            # RAG 检索客户端
 │   ├── log_processor.py         # 日志处理器
-│   └── chat_history_db.py       # 聊天历史存储
+│   ├── chat_history_db.py      # 聊天历史存储
+│   └── chroma_storage/          # ChromaDB 数据 (运行时生成)
 │
-├── skills/                        # 系统内置 Skills (平台级能力)
+├── skills/                       # 系统内置 Skills (平台级能力)
 │   ├── smart_masker.py          # 🎭 视觉打码模块
-│   ├── behavior_monitor.py       # 📊 行为监控模块
+│   ├── behavior_monitor.py      # 📊 行为监控模块
 │   └── evolution_mechanic.py    # 🧬 自进化机制
 │
-├── sandbox/                       # 沙盒测试
+├── sandbox/                      # 沙盒测试
 │   ├── sandbox_validator.py     # 沙盒验证器
-│   ├── semantic_evaluator.py    # 语义评估器
+│   ├── semantic_evaluator.py     # 语义评估器
 │   └── checklist_evaluator.py   # 检查清单评估器
 │
-├── prompts/                       # Prompt 模板
+├── prompts/                      # Prompt 模板
 │   ├── evolution_rule_extract.txt
 │   ├── evolution_skill_writing.txt
 │   ├── privacy_analysis.txt
 │   ├── relevance_assessment.txt
 │   └── retrieval_decision.txt
 │
-├── scripts/                       # 辅助脚本
+├── scripts/                      # 辅助脚本
 │   ├── generate_skills.py       # 生成 Skills
 │   ├── migrate_logs_to_chains.py
-│   ├── seed_notifications.py    # 初始化通知数据
 │   ├── seed_skills_db.py        # 初始化 Skills 数据库
-│   └── split_traces.py
+│   ├── split_traces.py
+│   └── download_ollama_models.sh
 │
 ├── skill_registry/               # Skills 注册表
 │   ├── __init__.py
 │   └── skill_db.py              # Skills 数据库管理
 │
 ├── user_skills/                  # 用户个性化 Skills (L3 Evolution 生成)
-│ 
+│   ├── {user_id}/
+│   │   ├── manifest.json        # 用户 Skills 清单
+│   │   └── {skill_name}/v{x}.{y}/
+│   │       ├── SKILL.md         # Skill 定义
+│   │       └── rules.json       # 规则配置
 │
-└── windows_sdk/                   # Windows SDK (AutoGLM 集成)
-
+├── windows_sdk/                  # Windows SDK (AutoGLM 集成)
+│
+└── models/                       # 本地模型文件
+    └── OpenBMB/MiniCPM-V-4_5/   # MiniCPM-V 4.5 模型权重
 
 ```
 
