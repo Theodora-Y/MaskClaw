@@ -104,6 +104,24 @@ Uploading screen content to the cloud for semantic judgment is not permitted und
 
 <h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">System Architecture</h2>
 
+<h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Two Deployment Options — Adapted to Different User Needs</h3>
+
+MaskClaw supports **Enterprise Deployment** and **Personal Deployment** two modes, allowing users to flexibly choose according to actual scenarios:
+
+| Dimension | 🏢 Enterprise | 👤 Personal |
+|:---|:---|:---|
+| **Deployment Location** | Company server, LAN/intranet | Personal device, local operation |
+| **Target Users** | Company employees, each with independent Skills library | Individual users |
+| **Model Selection** | MiniCPM-V 4.5 | Gemma 4 2B |
+| **Hardware Requirements** | Server GPU (recommended) | No GPU required, CPU compatible |
+| **Model Advantages** | Strong semantic understanding, quick adaptation, private deployment support | Lightweight, fast, no GPU required, low resource usage |
+| **Data Ownership** | Enterprise unified management, audit traceability | Fully private data, never leaves local device |
+| **Collaboration** | Multi-user collaborative filtering, rule sharing accelerates convergence | Single-user rule self-evolution |
+
+> 💡 **Enterprise Users**: Recommend using MiniCPM-V 4.5 for fast business requirement adaptation, private deployment and centralized management support.
+> 
+> 💡 **Personal Users**: Recommend using Gemma 4 2B, lightweight model with no hardware threshold, protecting personal privacy anytime, anywhere.
+
 <h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">Thin Client + Fat Server + Skill-Use Rule Scheduling Microservice Architecture</h3>
 
 MaskClaw intervenes in an Agent's execution chain through **Hooking** without modifying any code in third-party Agents like AutoGLM or OpenClaw.
@@ -116,7 +134,7 @@ MaskClaw intervenes in an Agent's execution chain through **Hooking** without mo
 | Layer | Name | Core Components |
 |:---:|:---|:---|
 | **Layer 1** | Perception | RapidOCR format-sensitive recognition, OpenCV local visual blur processing |
-| **Layer 2** | Cognition | MiniCPM-V 4.5 semantic reasoning, ChromaDB RAG rule retrieval |
+| **Layer 2** | Cognition | MiniCPM-V 4.5/Gemma 4 semantic reasoning, ChromaDB RAG rule retrieval |
 | **Layer 3** | Tool-Use | Smart Masker visual masking, PII Detection privacy detection |
 | **Layer 4** | Self-Evolution | Behavior Monitor behavior monitoring, Skill Evolution rule extraction, Sandbox verification |
 
@@ -183,11 +201,11 @@ MaskClaw intervenes in an Agent's execution chain through **Hooking** without mo
 
 <h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">🔒 Lightweight On-Device Model — Hardcore Guarantee for Data Not Leaving Edge</h3>
 
-Semantic reasoning is handled by **MiniCPM-V 4.5**, and with 9B parameters, it can be locally deployed on consumer-grade devices. Sensitive information identification and visual blur processing are all completed locally without relying on network connections.
+Semantic reasoning is handled by **MiniCPM-V 4.5/Gemma 4**, with vision model deployed locally on edge. Sensitive information identification and visual blur processing are all completed locally without relying on network connections.
 
 | Component | Technology | Advantage |
 |:---|:---|:---|
-| Vision Model | MiniCPM-V 4.5 (9B) | Deployable on edge, strong semantic understanding |
+| Vision Model | MiniCPM-V 4.5 (9B) / Gemma 4 2B | Deployable on edge, strong semantic understanding |
 | OCR Engine | RapidOCR | High-performance millisecond-level text recognition |
 | Masking Processing | OpenCV | Local visual processing, zero upload |
 | Rule Retrieval | ChromaDB | Efficient vector similarity search |
