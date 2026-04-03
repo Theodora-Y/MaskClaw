@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-accent: #7700FF;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Sora', system-ui, sans-serif;
+  background: #F5F5F5;
+  color: #0A0A0A;
+  min-width: 320px;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 2px; }
+::selection { background: var(--color-accent); color: white; opacity: 0.3; }
+
+/* === 层次感系统 === */
+:root {
+  --bg-page: #EEEBE5;
+  --bg-warm: #F8F6F2;
+  --shadow-warm: 0 1px 2px rgba(100,60,10,0.06), 0 2px 8px rgba(80,50,10,0.04);
+  --shadow-hover: 0 4px 20px rgba(100,60,10,0.10), 0 1px 4px rgba(100,60,10,0.06);
+  --shadow-modal: 0 24px 56px rgba(20,15,8,0.16);
+}
+
+body {
+  background-color: var(--bg-page);
+}

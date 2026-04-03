@@ -1,24 +1,26 @@
-# MiniCPM-o 2.6 API runtime dependencies (Python 3.10)
-# Note: torchaudio cu118 wheel should be installed from PyTorch index.
+# model_server 依赖
+# 根据使用的模型选择对应的依赖
 
+# ============================================================
+# 通用依赖
+# ============================================================
 fastapi
-uvicorn
-Pillow==10.1.0
+uvicorn>=0.24.0
+httpx>=0.25.0
+pydantic>=2.0.0
 
-# MiniCPM-o compatibility pins
-transformers==4.44.2
-huggingface_hub==0.24.7
-tokenizers==0.19.1
-
-# Model-side runtime imports
-soundfile==0.12.1
-librosa==0.9.0
-vector-quantize-pytorch==1.18.5
-vocos==0.1.0
-encodec==0.1.1
-einops==0.8.2
-einx==0.4.2
-frozendict==2.4.7
-
-# OCR
+# ============================================================
+# MiniCPM-V-4_5 视觉模型依赖
+# 如需使用 minicpm_api.py
+# ============================================================
+torch
+transformers
+Pillow
 rapidocr
+
+# ============================================================
+# Ollama gemma:2b 依赖
+# 如需使用 ollama_api.py（推荐，轻量）
+# 只需 httpx, fastapi, pydantic
+# ============================================================
+# 无额外依赖（httpx, pydantic 已列出）

@@ -179,6 +179,6 @@ class VisualMasker:
 # --- 测试示例 ---
 if __name__ == "__main__":
     masker = VisualMasker()
-    sensitive_list = ["北京市","李一航"]
-    path, count = masker.mask_sensitive_info("test.jpg", sensitive_list)
+    sensitive_list = ["李一航"]
+    path, count = masker.mask_sensitive_info("0007_after.png", sensitive_list)
     print(f"\n✅ 处理完成，已对 {count} 处敏感信息进行了打码。")

@@ -133,6 +133,17 @@ def console_archive(
     ok = db.archive_skill(user_id, skill_name, version, reason=reason)
     if not ok:
         raise HTTPException(status_code=404, detail={"error": "skill_not_found_or_already_archived"})
+    # 写入操作日志到 notification 表（confirmed状态，表示历史记录）
+    db.add_notification(
+        user_id=user_id,
+        notif_type="skill_disabled",
+        title="规则已停用",
+        body=f"用户停用了规则「{skill_name}」{version}",
+        skill_name=skill_name,
+        skill_version=version,
+        event_id=f"op-{user_id}-{skill_name}-disabled-{int(time.time())}",
+        status="confirmed",
+    )
     return {"success": True, "user_id": user_id, "skill_name": skill_name, "version": version}
 
 
@@ -151,6 +162,17 @@ def console_restore(
     ok = db.restore_skill(user_id, skill_name, version, str(USER_SKILLS_ROOT))
     if not ok:
         raise HTTPException(status_code=400, detail={"error": "restore_failed_check_content_or_already_active"})
+    # 写入操作日志到 notification 表（confirmed状态，表示历史记录）
+    db.add_notification(
+        user_id=user_id,
+        notif_type="skill_enabled",
+        title="规则已启用",
+        body=f"用户启用了规则「{skill_name}」{version}",
+        skill_name=skill_name,
+        skill_version=version,
+        event_id=f"op-{user_id}-{skill_name}-enabled-{int(time.time())}",
+        status="confirmed",
+    )
     return {"success": True, "user_id": user_id, "skill_name": skill_name, "version": version}
 
 
@@ -172,6 +194,17 @@ def console_delete(
     ok = db.archive_skill(user_id, skill_name, version, reason="user_deleted", delete_files=True)
     if not ok:
         raise HTTPException(status_code=404, detail={"error": "skill_not_found"})
+    # 写入操作日志到 notification 表（confirmed状态，表示历史记录）
+    db.add_notification(
+        user_id=user_id,
+        notif_type="skill_deleted",
+        title="规则已删除",
+        body=f"用户删除了规则「{skill_name}」{version}",
+        skill_name=skill_name,
+        skill_version=version,
+        event_id=f"op-{user_id}-{skill_name}-deleted-{int(time.time())}",
+        status="confirmed",
+    )
     return {"success": True, "user_id": user_id, "skill_name": skill_name, "version": version}
 
 
@@ -241,6 +274,17 @@ def console_update_meta(
         conn.commit()
     finally:
         conn.close()
+    # 写入操作日志到 notification 表
+    db.add_notification(
+        user_id=user_id,
+        notif_type="skill_updated",
+        title="规则已更新",
+        body=f"用户更新了规则「{skill_name}」",
+        skill_name=skill_name,
+        skill_version=target.get("version"),
+        event_id=f"op-{user_id}-{skill_name}-updated-{int(time.time())}",
+        status="confirmed",
+    )
     return {"success": True, "user_id": user_id, "skill_name": skill_name}
 
 
@@ -1850,8 +1894,8 @@ async def flush_autoglm_task(
     }
 
     # 写入 session_trace.jsonl
-    logger = TraceChainLogger(uid, str(MEMORY_ROOT / "logs"))
-    logger.write_chain(chain)
+    chain_logger = TraceChainLogger(uid, str(MEMORY_ROOT / "logs"))
+    chain_logger.write_chain(chain)
 
     logger.info(f"[AutoGLM] Flushed chain: chain_id={chain_id}, actions={len(actions)}")
 

@@ -6,7 +6,7 @@
   "model_sensitive_field": "Agent想做的操作内容",
   "strategy": "mask",
   "replacement": "[已脱敏]",
-  "rule_text": "工作群内容属内部信息，不得截图外传；客户姓名可用昵称替代；涉及人事变动话题不得传播。",
+  "rule_text": "工作群内容属内部信息，不得截图外传；客户姓名可用昵称替代；涉及。",
   "app_context_hint": "dingtalk",
   "confidence": 0.8,
   "needs_review": false,

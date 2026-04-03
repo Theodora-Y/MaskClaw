@@ -6,7 +6,7 @@
 models/
 model_server/minicpm_o/
 Open-AutoGLM-main/
-
+clawhub-upload/
 # ========================
 # 运行时数据 (每次运行生成)
 # ========================
@@ -21,7 +21,7 @@ skill_registry/skill_registry.db.lock
 # ========================
 # 前端 (独立部署)
 # ========================
-frontend/
+
 
 # ========================
 # 评测数据集 (可选,含实验日志)

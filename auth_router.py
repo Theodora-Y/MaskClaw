@@ -353,7 +353,8 @@ def _build_correction_events(
 
             app = APP_NAMES.get(str(raw.get("app_context") or ""), str(raw.get("app_context") or "未知应用"))
             field = str(raw.get("field") or "隐私规则")
-            title = f"[{app}-{field}] {type_label}"
+            # 可读标题：去掉方括号和 slug 格式
+            title = f"{app}规则{type_label.replace('规则', '')}"
 
             events.append(
                 {
@@ -393,9 +394,9 @@ def _build_publish_events(
     with _connect_skill_db() as conn:
         rows = conn.execute(
             """
-            SELECT id, skill_name, version, app_context, task_description, created_ts
-            FROM sop_version
-            WHERE user_id = ?
+            SELECT id, skill_name, version, scene, rule_text, created_ts
+            FROM skills
+            WHERE user_id = ? AND path != ''
             ORDER BY created_ts DESC
             """,
             (user_id,),
@@ -405,8 +406,8 @@ def _build_publish_events(
         first_rows = conn.execute(
             """
             SELECT skill_name, MIN(created_ts) AS first_ts
-            FROM sop_version
-            WHERE user_id = ?
+            FROM skills
+            WHERE user_id = ? AND path != ''
             GROUP BY skill_name
             """,
             (user_id,),
@@ -416,7 +417,7 @@ def _build_publish_events(
 
         archived_rows = conn.execute(
             """
-            SELECT id, skill_name, version, archived_ts, archived_reason
+            SELECT id, skill_name, version, scene, archived_ts, archived_reason
             FROM skills
             WHERE user_id = ? AND path = '' AND archived_ts IS NOT NULL
             ORDER BY archived_ts DESC
@@ -439,9 +440,11 @@ def _build_publish_events(
         source = "自动推导"
         trigger_delta = 0 if is_first else 1
 
+        app_name = APP_NAMES.get(str(row['scene'] or ''), str(row['scene'] or '未知'))
+        # scene 字段本身已经是可读中文描述（如"在微信中浏览朋友圈内容"），直接用作标题
+        skill_title = str(row['scene'] or skill_name)
         summary = (
-            f"系统在{APP_NAMES.get(str(row['app_context'] or ''), str(row['app_context'] or '未知应用'))}场景"
-            f"发布了 {skill_name} {version}"
+            f"系统在 {app_name} 场景发布了 {skill_name} {version}"
         )
 
         events.append(
@@ -452,7 +455,7 @@ def _build_publish_events(
                 "event_type": event_type,
                 "type_label": type_label,
                 "skill_name": skill_name,
-                "title": f"[{skill_name}] {type_label}",
+                "title": f"{skill_title} {type_label}",
                 "summary": summary,
                 "source": source,
                 "trigger_delta": trigger_delta,
@@ -464,7 +467,7 @@ def _build_publish_events(
                     "version": version,
                 },
                 "processed": True,
-                "source_ref": f"sop_version:{row['id']}",
+                "source_ref": f"skills:{row['id']}",
             }
         )
 
@@ -476,6 +479,7 @@ def _build_publish_events(
         skill_name = str(row["skill_name"] or "unknown-skill")
         version = str(row["version"] or "")
         reason = str(row["archived_reason"] or "策略停用")
+        scene = str(row["scene"] or skill_name)
 
         events.append(
             {
@@ -485,7 +489,7 @@ def _build_publish_events(
                 "event_type": "disabled",
                 "type_label": "规则停用",
                 "skill_name": skill_name,
-                "title": f"[{skill_name}] 规则停用",
+                "title": f"{scene} 规则停用",
                 "summary": f"{skill_name} {version} 已停用，原因：{reason}",
                 "source": "自动推导",
                 "trigger_delta": 0,

@@ -1861,6 +1861,7 @@ class SkillDB:
         skill_name: str | None = None,
         skill_version: str | None = None,
         event_id: str | None = None,
+        status: str = "pending",
     ) -> bool:
         """新增一条通知（忽略重复的 event_id）。"""
         lock_file = self._with_lock()
@@ -1873,11 +1874,12 @@ class SkillDB:
                           user_id, notif_type, title, body,
                           skill_name, skill_version, event_id,
                           status, created_ts
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             user_id, notif_type, title, body,
                             skill_name, skill_version, event_id,
+                            status,
                             int(time.time()),
                         ),
                     )

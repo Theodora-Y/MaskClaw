@@ -453,11 +453,27 @@ class SemanticEvaluator:
         except json.JSONDecodeError:
             pass
 
-        # 方法3：尝试找到第一个 { 到最后一个 } 的 JSON
-        first_brace = text.find("{")
-        last_brace = text.rfind("}")
-        if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
-            candidate = text[first_brace:last_brace + 1]
+        # 方法3：使用括号匹配找到完整的 JSON 对象（支持嵌套）
+        def find_matching_braces(s: str, start: int) -> tuple:
+            """从 start 位置开始，找到匹配的 { 和 }"""
+            depth = 0
+            start_brace = s.find('{', start)
+            if start_brace == -1:
+                return -1, -1
+            i = start_brace
+            while i < len(s):
+                if s[i] == '{':
+                    depth += 1
+                elif s[i] == '}':
+                    depth -= 1
+                    if depth == 0:
+                        return start_brace, i
+                i += 1
+            return start_brace, -1
+
+        first_brace, last_brace = find_matching_braces(text_clean, 0)
+        if first_brace != -1 and last_brace != -1:
+            candidate = text_clean[first_brace:last_brace + 1]
             try:
                 result = json.loads(candidate)
                 # 验证关键字段存在
@@ -466,7 +482,7 @@ class SemanticEvaluator:
             except json.JSONDecodeError:
                 pass
 
-        # 方法4：尝试找到数组格式 [...])
+        # 方法4：尝试找到数组格式 [...]
         first_bracket = text.find("[")
         last_bracket = text.rfind("]")
         if first_bracket != -1 and last_bracket != -1 and last_bracket > first_bracket:
@@ -488,11 +504,11 @@ class SemanticEvaluator:
         fixed = re.sub(r",(\s*[}\]])", r"\1", fixed)
         # 5.3 移除注释
         fixed = re.sub(r"//.*$", "", fixed, flags=re.MULTILINE)
-        # 5.4 移除末尾的非 JSON 文本
+        # 5.4 使用括号匹配移除末尾的非 JSON 文本
         if fixed.startswith("{"):
-            end_idx = fixed.rfind("}")
-            if end_idx > 0:
-                fixed = fixed[:end_idx + 1]
+            _, last_br = find_matching_braces(fixed, 0)
+            if last_br > 0:
+                fixed = fixed[:last_br + 1]
 
         try:
             result = json.loads(fixed)
@@ -500,17 +516,6 @@ class SemanticEvaluator:
                 return result
         except json.JSONDecodeError:
             pass
-
-        # 最后尝试：找任何包含 score 字段的 JSON
-        json_pattern = r'\{[^{}]*"score"\s*:\s*\d+[^{}]*\}'
-        matches = re.findall(json_pattern, text)
-        for match in matches:
-            try:
-                result = json.loads(match)
-                if "score" in result:
-                    return result
-            except json.JSONDecodeError:
-                continue
 
         raise ValueError(f"无法从文本中提取有效 JSON: {text[:200]}...")
 
