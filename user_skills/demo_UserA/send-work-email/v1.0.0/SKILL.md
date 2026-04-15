@@ -7,21 +7,29 @@ user_id: demo_UserA
 confidence: 0.85
 needs_review: false
 status: sandbox_passed
-description: >
-  在 邮件 场景下，使用企业邮箱发送一封工作邮件 时保护 患者信息 的隐私规则。
-  策略为 mask。
+description: “Applies mask-based privacy protection to work emails sent via enterprise mailbox. Use when composing or sending work emails that may contain patient information (患者信息), internal contacts, or financial data — detects sensitive fields and replaces them with '[已脱敏]' before the email is dispatched.”
 ---
 
 ## 何时使用
-在邮件的使用企业邮箱发送一封工作邮件时，该技能被触发。
+
+Use when the on-device agent intercepts an outgoing work email via enterprise mailbox (企业邮箱) that may contain sensitive data. Triggers on actions: composing a new email, replying, or forwarding messages in the email app context (`app_context: email`).
+
+**触发关键词**: 发送邮件、工作邮件、企业邮箱、患者信息、脱敏、数据保护、隐私保护、PHI、医疗信息
 
 ## 执行步骤
-- [ ] 步骤1：打开手机上的邮件应用，点击“新建邮件”按钮。
-- [ ] 步骤2：在收件人栏输入企业邮箱地址，点击“发送”按钮前，检查邮件内容是否包含患者信息、内部通讯录或财务数据等敏感内容。
-- [ ] 步骤3：如果发现敏感内容，使用脱敏打码（mask）或替换（replace）策略处理，确保内容合规后继续发送。
-- [ ] 步骤4：确认邮件内容无敏感信息后，点击“发送”按钮完成操作。如果没有权限发送邮件，提示用户联系管理员。
+
+1. **扫描邮件内容**: Scan the email subject, body, and attachments for sensitive fields — patient names (患者姓名), patient IDs (患者ID/住院号), phone numbers (手机号), diagnosis information (诊断信息), internal directory entries (内部通讯录), and financial figures (财务数据).
+2. **应用脱敏规则**: For each detected sensitive field, apply the `mask` strategy:
+   - 患者姓名: `张三` → `张*`
+   - 患者ID/住院号: `P20240315001` → `P*****001`
+   - 手机号: `13812345678` → `138****5678`
+   - 诊断信息: `高血压二期` → `[已脱敏]`
+   - 财务金额: `¥52,000` → `¥**,***`
+3. **验证脱敏结果**: Re-scan the processed email content to confirm no sensitive fields remain unmasked. If any are found, repeat step 2 for the missed fields.
+4. **用户确认**: Present the masked version to the user for review before sending. If the user approves, proceed with dispatch; if the user requests changes, allow manual edits and re-validate.
 
 ## 边界情况
-- [特殊情况1]：操作超时，自动等待10秒，若仍未完成则中断操作并提示用户重试。
-- [特殊情况2]：网络失败，尝试重新连接，若连接失败则提示用户检查网络并重试。
-- [特殊情况3]：用户拒绝发送邮件，记录用户反馈并停止操作。
+
+- **附件包含敏感信息**: If attachments (PDF, images, spreadsheets) contain patient data, flag the attachment to the user and recommend removing or redacting it before sending — attachment content scanning may be limited.
+- **多个敏感字段重叠**: When a single text segment contains multiple sensitive field types (e.g., “患者张三，住院号P20240315001”), apply masking rules in order of specificity (ID → name → phone) to avoid partial masking artifacts.
+- **用户拒绝脱敏**: If the user explicitly opts out of masking, log the decision with timestamp and reason to the audit trail, then allow the email to proceed — respect user autonomy while maintaining a record.

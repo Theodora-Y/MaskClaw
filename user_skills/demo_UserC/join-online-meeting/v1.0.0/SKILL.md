@@ -7,21 +7,28 @@ user_id: demo_UserC
 confidence: 0.8
 needs_review: false
 status: sandbox_passed
-description: >
-  在 视频会议 场景下，通过会议链接加入一个在线视频会议 时保护 会议主持人身份、家庭环境 的隐私规则。
-  策略为 mask。
+description: “Protects meeting host identity and home environment privacy when joining online video meetings via link. Use when the user clicks a meeting link to join a video conference (Zoom, Teams, Google Meet, 腾讯会议) — masks host identity in logs, enforces virtual background before camera activation, and prevents accidental screen sharing of private content.”
 ---
 
 ## 何时使用
-在视频会议的通过会议链接加入一个在线视频会议时，该技能被触发。
+
+Use when the on-device agent detects the user joining a video meeting via link or invitation (`app_context: meeting`). Triggers on: clicking a meeting URL, opening a meeting app invite, or joining a scheduled conference call.
+
+**触发关键词**: 视频会议、在线会议、会议链接、加入会议、Zoom、Teams、Google Meet、腾讯会议、隐私保护、背景模糊、虚拟背景
 
 ## 执行步骤
-- [ ] 步骤1：点击会议链接，进入会议加入页面。
-- [ ] 步骤2：确认会议主持人身份，核对会议链接与预期一致后输入密码或点击“加入”按钮。
-- [ ] 步骤3：检查入会背景，确保不暴露家庭环境，必要时调整摄像头角度。
-- [ ] 步骤4：点击麦克风图标，选择“静音”选项，确保麦克风默认静音。
-- [ ] 步骤5：检查屏幕共享设置，避免主动共享含隐私内容的屏幕，必要时关闭屏幕共享功能。
+
+1. **验证会议来源**: Before the agent proceeds with joining, verify the meeting link domain matches a known conferencing provider (e.g., `zoom.us`, `teams.microsoft.com`, `meet.google.com`, `meeting.tencent.com`). If the domain is unrecognized, warn the user: “会议链接来源未知，请确认后再加入”.
+2. **脱敏主持人身份**: When the meeting metadata is captured (host name, email, organization), apply masking before logging:
+   - 主持人姓名: `李明` → `李*`
+   - 主持人邮箱: `liming@company.com` → `l****@company.com`
+   - 会议ID: `123-456-789` → `***-***-789`
+3. **强制背景保护**: Before the camera is activated, check whether a virtual background or blur effect is enabled. If not, instruct the agent to enable background blur or a virtual background to protect the home environment. Flag to user: “已自动启用背景模糊以保护家庭环境隐私”.
+4. **屏幕共享审查**: Before allowing screen sharing, scan the active screen for sensitive content (open chat windows, financial apps, medical records). If detected, warn the user: “当前屏幕包含敏感内容，建议切换到演示窗口后再共享”.
+5. **验证隐私设置**: Confirm all privacy measures are active (background masked, microphone muted, screen sharing restricted) before finalizing the join action. Log the privacy check result.
 
 ## 边界情况
-- [特殊情况1]：如果操作超时（如点击“加入”按钮后超过30秒未响应），提示用户检查网络连接并重新尝试。
-- [特殊情况2]：如果网络失败导致无法加入会议，提示用户检查网络状态并稍后重试；若用户拒绝加入会议，则记录用户选择并结束操作。
+
+- **多平台会议切换**: If the user switches between meeting platforms mid-session (e.g., Zoom to Teams), re-run the full privacy check sequence for the new platform — settings do not carry over.
+- **主持人身份已公开**: If the meeting is a public webinar where the host identity is intentionally visible, skip host identity masking but still enforce background and screen sharing protections.
+- **用户主动关闭隐私保护**: If the user disables virtual background or unmutes intentionally, log the decision but do not block — respect user autonomy while recording the choice in the audit trail.
