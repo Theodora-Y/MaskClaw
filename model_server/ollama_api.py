@@ -435,12 +435,13 @@ async def v1_models():
 # ============== 启动服务 ==============
 
 if __name__ == "__main__":
+    listen_port = int(os.getenv("OLLAMA_PROXY_PORT", "8005"))
     print("=" * 60)
     print("Ollama 本地 LLM API 服务")
     print("=" * 60)
     print(f"Ollama 地址: {OLLAMA_BASE_URL}")
     print(f"默认模型: {DEFAULT_MODEL}")
-    print(f"API 端口: 8005")
+    print(f"API 端口: {listen_port}")
     print("=" * 60)
     print("可用接口:")
     print("  POST /chat              - 聊天接口")
@@ -456,4 +457,4 @@ if __name__ == "__main__":
     print("  ollama pull llama3.2")
     print("=" * 60)
 
-    uvicorn.run(app, host="0.0.0.0", port=8005)
+    uvicorn.run(app, host="0.0.0.0", port=listen_port)

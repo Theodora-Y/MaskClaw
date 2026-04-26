@@ -18,6 +18,28 @@ class VisualMasker:
     def __init__(self):
         self.ocr = get_ocr_engine()
 
+    @staticmethod
+    def _apply_mask(image, x: int, y: int, w: int, h: int, method: str = "blur"):
+        roi = image[y:y+h, x:x+w]
+        if roi.size == 0:
+            return image
+
+        method = (method or "blur").strip().lower()
+        if method == "mosaic":
+            down_w = max(1, w // 8)
+            down_h = max(1, h // 8)
+            mosaic = cv2.resize(roi, (down_w, down_h), interpolation=cv2.INTER_LINEAR)
+            mosaic = cv2.resize(mosaic, (w, h), interpolation=cv2.INTER_NEAREST)
+            image[y:y+h, x:x+w] = mosaic
+            return image
+        if method == "block":
+            image[y:y+h, x:x+w] = 0
+            return image
+
+        blurred = cv2.GaussianBlur(roi, (51, 51), 0)
+        image[y:y+h, x:x+w] = blurred
+        return image
+
     def _is_similar(self, text1: str, text2: str, threshold: float = 0.7) -> bool:
         if text1 in text2 or text2 in text1:
             return True
@@ -46,43 +68,38 @@ class VisualMasker:
         items.sort(key=lambda x: (x['center_y'], x['center_x']))
         return items
 
-    def mask_sensitive_info(self, image_path, sensitive_texts, output_path="safe_image.jpg"):
-        """对图片中的敏感词进行精准打码"""
+    def _scan_image_texts(self, image_path):
         image = cv2.imread(image_path)
         if image is None:
             raise ValueError(f"无法读取图片: {image_path}")
-        
+
         # 1. OCR 扫描全图
         ocr_result = self.ocr(image)
-        
+
         if ocr_result is None:
-            print("未检测到任何文字")
-            cv2.imwrite(output_path, image)
-            return output_path, 0
-        
+            return image, [], "", None
+
         boxes = ocr_result.boxes
         texts = ocr_result.txts
         scores = ocr_result.scores
-        
+
         if boxes is None or len(boxes) == 0:
-            print("未检测到任何文字")
-            cv2.imwrite(output_path, image)
-            return output_path, 0
-        
+            return image, [], "", None
+
         # 打印所有 OCR 识别结果
         print(f"OCR 共识别到 {len(texts)} 个文本区域:")
         for i, text in enumerate(texts):
             score = scores[i] if i < len(scores) else 0
             print(f"  {i}: \"{text}\" (置信度: {score:.2f})")
-        
+
         # 2. 按阅读顺序排列
         line_items = self._get_line_items(boxes, texts, scores)
-        
+
         # 3. 构建字符级别映射
         # full_text_idx_to_box: {char_position: (box_idx, char_idx_in_box)}
         full_text_idx_to_box = {}
         full_text = ""
-        
+
         char_pos = 0
         for item_idx, item in enumerate(line_items):
             text = item['text']
@@ -90,90 +107,137 @@ class VisualMasker:
                 full_text_idx_to_box[char_pos] = (item_idx, char_idx)
                 full_text += char
                 char_pos += 1
-        
+
         print(f"\n完整文本: {full_text}")
         print(f"共 {len(full_text)} 个字符")
-        
-        # 4. 搜索并打码敏感词
-        masked_count = 0
-        
+
+        return image, line_items, full_text, full_text_idx_to_box
+
+    def _collect_sensitive_regions(self, image, line_items, full_text, full_text_idx_to_box, sensitive_texts):
+        regions = []
         for s_text in sensitive_texts:
             # 使用正则找到所有匹配位置
             pattern = re.escape(s_text)
             matches = list(re.finditer(pattern, full_text))
-            
+
             if matches:
                 print(f"\n找到敏感词 \"{s_text}\" 共 {len(matches)} 处")
-                
+
                 for match in matches:
                     start_idx = match.start()
                     end_idx = match.end()
                     print(f"  位置: {start_idx}-{end_idx}")
-                    
+
                     # 统计每个 box 中涉及哪些字符
                     boxes_to_process = {}  # {box_idx: [char_positions]}
-                    
+
                     for cp in range(start_idx, end_idx):
                         if cp in full_text_idx_to_box:
                             box_idx, char_idx = full_text_idx_to_box[cp]
                             if box_idx not in boxes_to_process:
                                 boxes_to_process[box_idx] = []
                             boxes_to_process[box_idx].append(char_idx)
-                    
+
                     # 对每个涉及的 box 计算精准打码区域
                     for box_idx, char_indices in boxes_to_process.items():
                         item = line_items[box_idx]
                         box = item['box']
                         box_text = item['text']
-                        
+
                         # 该 box 的总字符数
                         total_chars = len(box_text)
                         if total_chars == 0:
                             continue
-                        
+
                         # 敏感字符在该 box 中的范围（相对位置 0-1）
                         min_char = min(char_indices)
                         max_char = max(char_indices) + 1
-                        
+
                         char_start_ratio = min_char / total_chars
                         char_end_ratio = max_char / total_chars
-                        
+
                         # 获取 box 坐标
                         x, y, w, h = cv2.boundingRect(box)
-                        
+
                         # 插值计算打码的精准横向区域
                         mask_x = int(x + w * char_start_ratio)
                         mask_w = int(w * (char_end_ratio - char_start_ratio))
-                        
+
                         # 确保在图片范围内
                         mask_x = max(0, mask_x)
                         mask_w = min(image.shape[1] - mask_x, mask_w)
-                        
+
                         if mask_w > 0 and h > 0:
-                            roi = image[y:y+h, mask_x:mask_x+mask_w]
-                            roi = cv2.GaussianBlur(roi, (51, 51), 0)
-                            image[y:y+h, mask_x:mask_x+mask_w] = roi
-                            masked_count += 1
                             print(f"    打码 box[{box_idx}] \"{box_text}\" 第{min_char}-{max_char}字 at ({mask_x},{y},{mask_w},{h})")
+                            regions.append(
+                                {
+                                    "matched_text": str(s_text),
+                                    "ocr_text": str(box_text),
+                                    "x": int(mask_x),
+                                    "y": int(y),
+                                    "width": int(mask_w),
+                                    "height": int(h),
+                                    "box_index": int(box_idx),
+                                }
+                            )
             else:
                 # 模糊匹配
                 for item_idx, item in enumerate(line_items):
                     if self._is_similar(item['text'], s_text, threshold=0.6):
                         box = item['box']
                         x, y, w, h = cv2.boundingRect(box)
-                        
-                        roi = image[y:y+h, x:x+w]
-                        roi = cv2.GaussianBlur(roi, (51, 51), 0)
-                        image[y:y+h, x:x+w] = roi
-                        masked_count += 1
                         print(f"模糊匹配打码: \"{item['text']}\" at ({x},{y},{w},{h})")
-        
+                        regions.append(
+                            {
+                                "matched_text": str(s_text),
+                                "ocr_text": str(item['text']),
+                                "x": int(x),
+                                "y": int(y),
+                                "width": int(w),
+                                "height": int(h),
+                                "box_index": int(item_idx),
+                            }
+                        )
+        return regions
+
+    def detect_sensitive_regions(self, image_path, sensitive_texts):
+        """仅检测敏感词区域，不修改图片。"""
+        image, line_items, full_text, full_text_idx_to_box = self._scan_image_texts(image_path)
+        if not line_items:
+            print("未检测到任何文字")
+            return []
+        return self._collect_sensitive_regions(image, line_items, full_text, full_text_idx_to_box, sensitive_texts)
+
+    def mask_sensitive_info(self, image_path, sensitive_texts, output_path="safe_image.jpg", method="blur", return_regions=False):
+        """对图片中的敏感词进行精准打码"""
+        image, line_items, full_text, full_text_idx_to_box = self._scan_image_texts(image_path)
+        if not line_items:
+            print("未检测到任何文字")
+            cv2.imwrite(output_path, image)
+            return (output_path, 0, []) if return_regions else (output_path, 0)
+
+        # 4. 搜索并打码敏感词
+        regions = self._collect_sensitive_regions(image, line_items, full_text, full_text_idx_to_box, sensitive_texts)
+        masked_count = 0
+        for region in regions:
+            self._apply_mask(
+                image,
+                int(region["x"]),
+                int(region["y"]),
+                int(region["width"]),
+                int(region["height"]),
+                method=method,
+            )
+            masked_count += 1
+
         # 5. 保存结果
         cv2.imwrite(output_path, image)
-        
+
         if masked_count == 0:
             print("警告: 未匹配到任何敏感文本！")
-        
+
+        if return_regions:
+            return output_path, masked_count, regions
         return output_path, masked_count
 
 # --- 测试示例 ---

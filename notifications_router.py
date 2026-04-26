@@ -17,6 +17,7 @@ from fastapi import APIRouter, Header, HTTPException, Query
 
 # ── 与 auth_router.py 共用同一 JWT 配置 ──────────────────────
 from auth_router import JWT_SECRET, verify_token, _extract_bearer_token
+from review_service import ReviewService
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 SKILL_DB_PATH = PROJECT_ROOT / "skill_registry" / "skill_registry.db"
@@ -41,6 +42,10 @@ def _require_jwt(path_user_id: str, authorization: str | None) -> str:
 def _get_skill_db():
     from skill_registry.skill_db import SkillDB
     return SkillDB(db_path=str(SKILL_DB_PATH))
+
+
+def _get_review_service() -> ReviewService:
+    return ReviewService()
 
 
 # ──────────────────── 接口实现 ────────────────────
@@ -137,11 +142,11 @@ def confirm_notification(
     """
     _require_jwt(user_id, authorization)
 
-    db = _get_skill_db()
-    ok = db.mark_notification_read(user_id, notif_id)
-    if not ok:
-        raise HTTPException(status_code=404, detail={"error": "notification_not_found"})
-    return {"ok": True, "notif_id": notif_id, "status": "confirmed"}
+    try:
+        payload = _get_review_service().approve_review(user_id, notif_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail={"error": exc.args[0]}) from exc
+    return payload
 
 
 @notifications_router.put("/{user_id}/{notif_id}/dismiss")
@@ -157,8 +162,8 @@ def dismiss_notification(
     """
     _require_jwt(user_id, authorization)
 
-    db = _get_skill_db()
-    ok = db.dismiss_notification(user_id, notif_id)
-    if not ok:
-        raise HTTPException(status_code=404, detail={"error": "notification_not_found"})
-    return {"ok": True, "notif_id": notif_id, "status": "dismissed"}
+    try:
+        payload = _get_review_service().reject_review(user_id, notif_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail={"error": exc.args[0]}) from exc
+    return payload

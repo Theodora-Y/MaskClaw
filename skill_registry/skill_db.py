@@ -12,11 +12,23 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+import shutil
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import fcntl
+try:
+    import fcntl
+except ModuleNotFoundError:  # pragma: no cover - Windows fallback
+    class _FcntlFallback:
+        LOCK_EX = 0
+        LOCK_UN = 0
+
+        @staticmethod
+        def flock(fd: int, operation: int) -> None:
+            return None
+
+    fcntl = _FcntlFallback()  # type: ignore[assignment]
 
 
 class SkillDB:
@@ -28,6 +40,9 @@ class SkillDB:
 
     SOP_DRAFT_STAGES = ("diagnose", "draft", "validate", "ready")
     SOP_DRAFT_STAGE_ORDER = {"diagnose": 0, "draft": 1, "validate": 2, "ready": 3}
+    SKILL_LIFECYCLE_STATES = ("draft", "pending", "active", "rejected", "archived")
+    REVIEW_DIRNAME = ".review"
+    TRASH_DIRNAME = ".trash"
 
     def __init__(self, db_path: str = "skill_registry/skill_registry.db") -> None:
         self.db_path = Path(db_path)
@@ -54,6 +69,11 @@ class SkillDB:
     def _row_to_dict(row: sqlite3.Row) -> Dict[str, Any]:
         return dict(row)
 
+    def _write_catalog_snapshot(self, user_id: str) -> None:
+        catalog_path = self._user_skills_root() / user_id / "SKILL_CATALOG.md"
+        catalog_path.parent.mkdir(parents=True, exist_ok=True)
+        catalog_path.write_text(self.generate_catalog_snapshot(user_id), encoding="utf-8")
+
     def init_db(self) -> None:
         lock_file = self._with_lock()
         try:
@@ -75,6 +95,10 @@ class SkillDB:
                       rule_text          TEXT,
                       skill_md_content   TEXT,
                       rules_json_content TEXT,
+                      status             TEXT    DEFAULT 'active',
+                      status_reason      TEXT,
+                      reviewed_ts        INTEGER,
+                      updated_ts         INTEGER,
                       created_ts         INTEGER NOT NULL,
                       archived_ts        INTEGER,
                       archived_reason    TEXT,
@@ -163,6 +187,10 @@ class SkillDB:
                       scripts_json       TEXT,
                       rules_json_content TEXT,
                       status             TEXT    DEFAULT 'active',
+                      status_reason      TEXT,
+                      reviewed_ts        INTEGER,
+                      updated_ts         INTEGER,
+                      archived_ts        INTEGER,
                       created_ts         INTEGER NOT NULL,
                       UNIQUE(user_id, skill_name, version)
                     )
@@ -198,6 +226,30 @@ class SkillDB:
 
     def _migrate_tables(self, conn: sqlite3.Connection) -> None:
         """迁移表结构，添加新列（如果不存在）"""
+        skill_columns = [
+            ("status", "TEXT DEFAULT 'active'"),
+            ("status_reason", "TEXT"),
+            ("reviewed_ts", "INTEGER"),
+            ("updated_ts", "INTEGER"),
+        ]
+        for col_name, col_type in skill_columns:
+            try:
+                conn.execute(f"ALTER TABLE skills ADD COLUMN {col_name} {col_type}")
+            except sqlite3.OperationalError:
+                pass
+
+        sop_version_columns = [
+            ("status_reason", "TEXT"),
+            ("reviewed_ts", "INTEGER"),
+            ("updated_ts", "INTEGER"),
+            ("archived_ts", "INTEGER"),
+        ]
+        for col_name, col_type in sop_version_columns:
+            try:
+                conn.execute(f"ALTER TABLE sop_version ADD COLUMN {col_name} {col_type}")
+            except sqlite3.OperationalError:
+                pass
+
         # sop_draft 表新增列
         new_columns_sop_draft = [
             ("app_context", "TEXT"),
@@ -232,6 +284,241 @@ class SkillDB:
             except sqlite3.OperationalError:
                 pass  # 列已存在
 
+        conn.commit()
+        self._backfill_lifecycle_state(conn)
+
+    def _project_root(self) -> Path:
+        return self.db_path.parent.parent
+
+    def _user_skills_root(self) -> Path:
+        return self._project_root() / "user_skills"
+
+    def _active_skill_dir(self, user_id: str, skill_name: str, version: str) -> Path:
+        return self._user_skills_root() / user_id / skill_name / version
+
+    def _review_skill_dir(self, user_id: str, skill_name: str, version: str) -> Path:
+        return self._user_skills_root() / self.REVIEW_DIRNAME / user_id / skill_name / version
+
+    def _trash_skill_dir(self, user_id: str, skill_name: str, version: str) -> Path:
+        return self._user_skills_root() / self.TRASH_DIRNAME / user_id / skill_name / version
+
+    def _path_for_status(self, user_id: str, skill_name: str, version: str, status: str) -> Path:
+        if status == "active":
+            return self._active_skill_dir(user_id, skill_name, version)
+        if status in {"draft", "pending", "rejected"}:
+            return self._review_skill_dir(user_id, skill_name, version)
+        return self._trash_skill_dir(user_id, skill_name, version)
+
+    @staticmethod
+    def _storage_bucket(path: str) -> str:
+        normalized = str(path or "").replace("\\", "/")
+        if "/.review/" in normalized:
+            return "review"
+        if "/.trash/" in normalized:
+            return "trash"
+        if normalized:
+            return "active"
+        return "unknown"
+
+    @classmethod
+    def _normalize_status(cls, value: Any, default: str = "active") -> str:
+        text = str(value or "").strip().lower()
+        if text in cls.SKILL_LIFECYCLE_STATES:
+            return text
+        return default
+
+    def _move_tree(self, source: Path, target: Path) -> Path:
+        if source.resolve() == target.resolve():
+            return target
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if target.exists():
+            return target
+        shutil.move(str(source), str(target))
+        self._cleanup_empty_parents(source.parent, self._user_skills_root())
+        return target
+
+    def _cleanup_empty_parents(self, start: Path, stop: Path) -> None:
+        current = start
+        stop_resolved = stop.resolve()
+        while True:
+            try:
+                current_resolved = current.resolve()
+            except FileNotFoundError:
+                break
+            if current_resolved == stop_resolved or not str(current_resolved).startswith(str(stop_resolved)):
+                break
+            try:
+                current.rmdir()
+            except OSError:
+                break
+            if current.parent == current:
+                break
+            current = current.parent
+
+    def _materialize_snapshot_dir(
+        self,
+        target_dir: Path,
+        skill_md_content: str,
+        rules_json_content: str,
+    ) -> Path:
+        target_dir.mkdir(parents=True, exist_ok=True)
+        (target_dir / "SKILL.md").write_text(skill_md_content, encoding="utf-8")
+        (target_dir / "rules.json").write_text(rules_json_content, encoding="utf-8")
+        return target_dir
+
+    def _backfill_lifecycle_state(self, conn: sqlite3.Connection) -> None:
+        rows = conn.execute(
+            """
+            SELECT id, user_id, skill_name, version, path, archived_ts, archived_reason, status,
+                   skill_md_content, rules_json_content
+            FROM skills
+            ORDER BY user_id, skill_name, created_ts
+            """
+        ).fetchall()
+        if not rows:
+            return
+
+        pending_pairs = {
+            (str(row["skill_name"] or ""), str(row["skill_version"] or ""))
+            for row in conn.execute(
+                """
+                SELECT skill_name, skill_version
+                FROM notifications
+                WHERE status = 'pending'
+                """
+            ).fetchall()
+        }
+        dismissed_pairs = {
+            (str(row["skill_name"] or ""), str(row["skill_version"] or ""))
+            for row in conn.execute(
+                """
+                SELECT skill_name, skill_version
+                FROM notifications
+                WHERE status = 'dismissed'
+                """
+            ).fetchall()
+        }
+
+        report_entries: list[dict[str, Any]] = []
+        now_ts = int(time.time())
+        for row in rows:
+            record = self._row_to_dict(row)
+            skill_name = str(record.get("skill_name") or "")
+            version = str(record.get("version") or "")
+            user_id = str(record.get("user_id") or "")
+            existing_status = self._normalize_status(record.get("status"), default="")
+            path_text = str(record.get("path") or "")
+            inferred_status = existing_status or "active"
+            reason = "preserved"
+            needs_review = False
+
+            if not existing_status:
+                pair = (skill_name, version)
+                if pair in pending_pairs:
+                    inferred_status = "pending"
+                    reason = "pending_notification"
+                elif pair in dismissed_pairs:
+                    inferred_status = "rejected"
+                    reason = "dismissed_notification"
+                elif record.get("archived_ts"):
+                    inferred_status = "archived"
+                    reason = "archived_ts"
+                elif path_text:
+                    inferred_status = "active"
+                    reason = "active_path"
+                else:
+                    inferred_status = "archived"
+                    reason = "fallback_archived"
+                    needs_review = True
+
+            target_path = str(self._path_for_status(user_id, skill_name, version, inferred_status))
+            skill_md_content = str(record.get("skill_md_content") or "")
+            rules_json_content = str(record.get("rules_json_content") or "")
+
+            source_path = Path(path_text) if path_text else None
+            new_path = path_text
+            try:
+                if source_path and source_path.exists():
+                    moved_to = self._move_tree(source_path, Path(target_path))
+                    new_path = str(moved_to)
+                elif skill_md_content and rules_json_content:
+                    materialized = self._materialize_snapshot_dir(Path(target_path), skill_md_content, rules_json_content)
+                    new_path = str(materialized)
+                    if not reason.endswith("_materialized"):
+                        reason = f"{reason}_materialized"
+                else:
+                    new_path = path_text
+                    needs_review = True
+            except Exception as exc:
+                needs_review = True
+                reason = f"{reason}:path_migration_failed:{exc}"
+
+            conn.execute(
+                """
+                UPDATE skills
+                SET status = ?, status_reason = COALESCE(status_reason, ?), updated_ts = COALESCE(updated_ts, ?), path = ?
+                WHERE id = ?
+                """,
+                (inferred_status, reason, now_ts, new_path, int(record["id"])),
+            )
+            if inferred_status == "archived" and not record.get("archived_ts"):
+                conn.execute(
+                    "UPDATE skills SET archived_ts = COALESCE(archived_ts, ?), archived_reason = COALESCE(archived_reason, ?) WHERE id = ?",
+                    (now_ts, reason, int(record["id"])),
+                )
+
+            changed = (
+                str(record.get("status") or "") != inferred_status
+                or path_text != new_path
+                or needs_review
+            )
+            if changed:
+                report_entries.append(
+                    {
+                        "user_id": user_id,
+                        "skill_name": skill_name,
+                        "version": version,
+                        "legacy": {
+                            "path": path_text,
+                            "archived_ts": record.get("archived_ts"),
+                            "archived_reason": record.get("archived_reason"),
+                            "status": record.get("status"),
+                        },
+                        "inferred_status": inferred_status,
+                        "path": new_path,
+                        "needs_manual_review": needs_review,
+                        "reason": reason,
+                    }
+                )
+
+        sop_rows = conn.execute("SELECT id, status FROM sop_version").fetchall()
+        for row in sop_rows:
+            current_status = self._normalize_status(row["status"])
+            conn.execute(
+                """
+                UPDATE sop_version
+                SET status = ?, updated_ts = COALESCE(updated_ts, ?)
+                WHERE id = ?
+                """,
+                (current_status, now_ts, int(row["id"])),
+            )
+
+        conn.commit()
+        self._emit_migration_report(report_entries)
+
+    def _emit_migration_report(self, entries: list[dict[str, Any]]) -> None:
+        if not entries:
+            return
+        logs_dir = self._project_root() / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        report_path = logs_dir / f"phase2_lifecycle_migration_{int(time.time())}.json"
+        payload = {
+            "generated_ts": int(time.time()),
+            "db_path": str(self.db_path),
+            "entries": entries,
+        }
+        report_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
     def add_skill(
         self,
         user_id: str,
@@ -239,6 +526,8 @@ class SkillDB:
         version: str,
         path: str,
         rule_dict: Dict[str, Any],
+        status: str = "active",
+        status_reason: Optional[str] = None,
     ) -> bool:
         skill_dir = Path(path)
         skill_md_path = skill_dir / "SKILL.md"
@@ -249,6 +538,10 @@ class SkillDB:
         content_hash = hashlib.md5((skill_md_content + rules_json_content).encode("utf-8")).hexdigest()
 
         old_active_path = ""
+        old_active_target = ""
+        normalized_status = self._normalize_status(status)
+        target_dir = self._path_for_status(user_id, skill_name, version, normalized_status)
+        target_path = str(target_dir)
         lock_file = self._with_lock()
         try:
             with self._connect() as conn:
@@ -264,34 +557,41 @@ class SkillDB:
 
                 active_row = conn.execute(
                     """
-                    SELECT version FROM skills
-                    WHERE user_id = ? AND skill_name = ? AND path != ''
+                    SELECT version, path FROM skills
+                    WHERE user_id = ? AND skill_name = ? AND status = 'active'
                     ORDER BY created_ts DESC
                     LIMIT 1
                     """,
                     (user_id, skill_name),
                 ).fetchone()
 
-                if active_row:
+                if active_row and normalized_status == "active":
                     old_active_version = str(active_row["version"])
-                    old_row = conn.execute(
-                        """
-                        SELECT path FROM skills
-                        WHERE user_id = ? AND skill_name = ? AND version = ?
-                        """,
-                        (user_id, skill_name, old_active_version),
-                    ).fetchone()
-                    old_active_path = str((old_row["path"] if old_row else "") or "")
+                    old_active_path = str(active_row["path"] or "")
+                    old_active_target = str(self._trash_skill_dir(user_id, skill_name, old_active_version))
                     conn.execute(
                         """
                         UPDATE skills
-                        SET path = '', archived_ts = ?, archived_reason = ?, superseded_by = ?
+                        SET path = ?, status = 'archived', status_reason = ?, archived_ts = ?, archived_reason = ?, superseded_by = ?, updated_ts = ?
                         WHERE user_id = ? AND skill_name = ? AND version = ?
                         """,
-                        (int(time.time()), "superseded", version, user_id, skill_name, old_active_version),
+                        (
+                            old_active_target,
+                            "superseded",
+                            int(time.time()),
+                            "superseded",
+                            version,
+                            int(time.time()),
+                            user_id,
+                            skill_name,
+                            old_active_version,
+                        ),
                     )
 
                 now_ts = int(time.time())
+                reviewed_ts = now_ts if normalized_status in {"active", "rejected", "archived"} else None
+                archived_ts = now_ts if normalized_status == "archived" else None
+                archived_reason = status_reason if normalized_status == "archived" else None
                 conn.execute(
                     """
                     INSERT INTO skills (
@@ -299,14 +599,15 @@ class SkillDB:
                       confidence, content_hash,
                       strategy, sensitive_field, scene, rule_text,
                       skill_md_content, rules_json_content,
+                      status, status_reason, reviewed_ts, updated_ts,
                       created_ts, archived_ts, archived_reason, superseded_by
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
                     """,
                     (
                         user_id,
                         skill_name,
                         version,
-                        str(path),
+                        target_path,
                         float(rule_dict.get("confidence", 0.0)),
                         content_hash,
                         str(rule_dict.get("strategy", "")),
@@ -315,19 +616,27 @@ class SkillDB:
                         str(rule_dict.get("rule_text", "")),
                         skill_md_content,
                         rules_json_content,
+                        normalized_status,
+                        status_reason,
+                        reviewed_ts,
                         now_ts,
+                        now_ts,
+                        archived_ts,
+                        archived_reason,
                     ),
                 )
                 conn.commit()
-            if old_active_path:
+            if old_active_path and old_active_target:
                 old_dir = Path(old_active_path)
                 if old_dir.exists() and old_dir.is_dir():
-                    for p in sorted(old_dir.rglob("*"), reverse=True):
-                        if p.is_file():
-                            p.unlink(missing_ok=True)
-                        elif p.is_dir():
-                            p.rmdir()
-                    old_dir.rmdir()
+                    self._move_tree(old_dir, Path(old_active_target))
+
+            if skill_dir.exists() and skill_dir.is_dir():
+                if skill_dir != target_dir:
+                    self._move_tree(skill_dir, target_dir)
+            elif skill_md_content or rules_json_content:
+                self._materialize_snapshot_dir(target_dir, skill_md_content, rules_json_content)
+            self._write_catalog_snapshot(user_id)
             return True
         finally:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
@@ -344,11 +653,12 @@ class SkillDB:
     ) -> bool:
         lock_file = self._with_lock()
         old_path = ""
+        target_path = str(self._trash_skill_dir(user_id, skill_name, version))
         try:
             with self._connect() as conn:
                 row = conn.execute(
                     """
-                    SELECT path FROM skills
+                    SELECT path, status FROM skills
                     WHERE user_id = ? AND skill_name = ? AND version = ?
                     """,
                     (user_id, skill_name, version),
@@ -356,34 +666,50 @@ class SkillDB:
                 if not row:
                     return False
                 old_path = str(row["path"] or "")
-                if not old_path:
+                current_status = self._normalize_status(row["status"])
+                if current_status == "archived":
                     return False
 
                 conn.execute(
                     """
                     UPDATE skills
-                    SET path = '',
+                    SET path = ?,
+                        status = 'archived',
+                        status_reason = ?,
+                        reviewed_ts = ?,
                         archived_ts = ?,
                         archived_reason = ?,
-                        superseded_by = ?
+                        superseded_by = ?,
+                        updated_ts = ?
                     WHERE user_id = ? AND skill_name = ? AND version = ?
                     """,
-                    (int(time.time()), reason, superseded_by, user_id, skill_name, version),
+                    (
+                        target_path,
+                        reason,
+                        int(time.time()),
+                        int(time.time()),
+                        reason,
+                        superseded_by,
+                        int(time.time()),
+                        user_id,
+                        skill_name,
+                        version,
+                    ),
                 )
                 conn.commit()
         finally:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
             lock_file.close()
 
-        if delete_files and old_path:
+        if old_path:
             old_dir = Path(old_path)
             if old_dir.exists() and old_dir.is_dir():
-                for p in sorted(old_dir.rglob("*"), reverse=True):
-                    if p.is_file():
-                        p.unlink(missing_ok=True)
-                    elif p.is_dir():
-                        p.rmdir()
-                old_dir.rmdir()
+                if delete_files:
+                    shutil.rmtree(old_dir, ignore_errors=True)
+                else:
+                    self._move_tree(old_dir, Path(target_path))
+
+        self._write_catalog_snapshot(user_id)
 
         return True
 
@@ -395,6 +721,7 @@ class SkillDB:
         base_dir: str,
     ) -> bool:
         old_active_path = ""
+        old_active_target = ""
         lock_file = self._with_lock()
         restored_path = ""
         skill_md_content = ""
@@ -410,13 +737,13 @@ class SkillDB:
                 ).fetchone()
                 if not row:
                     return False
-                if str(row["path"] or ""):
+                if self._normalize_status(row["status"]) == "active":
                     return False
 
                 active = conn.execute(
                     """
-                    SELECT version FROM skills
-                    WHERE user_id = ? AND skill_name = ? AND path != ''
+                    SELECT version, path FROM skills
+                    WHERE user_id = ? AND skill_name = ? AND status = 'active'
                     ORDER BY created_ts DESC
                     LIMIT 1
                     """,
@@ -425,21 +752,25 @@ class SkillDB:
 
                 if active:
                     old_active_version = str(active["version"])
-                    old_row = conn.execute(
-                        """
-                        SELECT path FROM skills
-                        WHERE user_id = ? AND skill_name = ? AND version = ?
-                        """,
-                        (user_id, skill_name, old_active_version),
-                    ).fetchone()
-                    old_active_path = str((old_row["path"] if old_row else "") or "")
+                    old_active_path = str(active["path"] or "")
+                    old_active_target = str(self._trash_skill_dir(user_id, skill_name, old_active_version))
                     conn.execute(
                         """
                         UPDATE skills
-                        SET path = '', archived_ts = ?, archived_reason = ?, superseded_by = NULL
+                        SET path = ?, status = 'archived', status_reason = ?, reviewed_ts = ?, archived_ts = ?, archived_reason = ?, superseded_by = NULL, updated_ts = ?
                         WHERE user_id = ? AND skill_name = ? AND version = ?
                         """,
-                        (int(time.time()), "user_archived", user_id, skill_name, old_active_version),
+                        (
+                            old_active_target,
+                            "user_archived",
+                            int(time.time()),
+                            int(time.time()),
+                            "user_archived",
+                            int(time.time()),
+                            user_id,
+                            skill_name,
+                            old_active_version,
+                        ),
                     )
 
                 skill_md_content = str(row["skill_md_content"] or "")
@@ -447,46 +778,194 @@ class SkillDB:
                 if not skill_md_content and not rules_json_content:
                     return False
 
-                new_dir = Path(base_dir) / user_id / f"{skill_name}-{version}"
-                new_dir.mkdir(parents=True, exist_ok=True)
-                (new_dir / "SKILL.md").write_text(skill_md_content, encoding="utf-8")
-                (new_dir / "rules.json").write_text(rules_json_content, encoding="utf-8")
+                new_dir = Path(base_dir) / user_id / skill_name / version
+                current_path = str(row["path"] or "")
+                current_dir = Path(current_path) if current_path else None
+                if current_dir and current_dir.exists():
+                    moved_to = self._move_tree(current_dir, new_dir)
+                    new_dir = moved_to
+                else:
+                    self._materialize_snapshot_dir(new_dir, skill_md_content, rules_json_content)
                 restored_path = str(new_dir)
 
                 conn.execute(
                     """
                     UPDATE skills
-                    SET path = ?,
+                    SET path = ?, status = 'active', status_reason = ?, reviewed_ts = ?,
                         archived_ts = NULL,
                         archived_reason = NULL,
-                        superseded_by = NULL
+                        superseded_by = NULL,
+                        updated_ts = ?
                     WHERE user_id = ? AND skill_name = ? AND version = ?
                     """,
-                    (restored_path, user_id, skill_name, version),
+                    (restored_path, "restored", int(time.time()), int(time.time()), user_id, skill_name, version),
                 )
                 conn.commit()
         finally:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
             lock_file.close()
 
-        if old_active_path:
+        if old_active_path and old_active_target:
             old_dir = Path(old_active_path)
             if old_dir.exists() and old_dir.is_dir():
-                for p in sorted(old_dir.rglob("*"), reverse=True):
-                    if p.is_file():
-                        p.unlink(missing_ok=True)
-                    elif p.is_dir():
-                        p.rmdir()
-                old_dir.rmdir()
+                self._move_tree(old_dir, Path(old_active_target))
 
         if not restored_path:
             return False
 
-        catalog_md = self.generate_catalog_snapshot(user_id)
-        catalog_path = Path(base_dir) / user_id / "SKILL_CATALOG.md"
-        catalog_path.parent.mkdir(parents=True, exist_ok=True)
-        catalog_path.write_text(catalog_md, encoding="utf-8")
+        self._write_catalog_snapshot(user_id)
         return True
+
+    def set_skill_lifecycle_status(
+        self,
+        user_id: str,
+        skill_name: str,
+        version: str,
+        status: str,
+        reason: str | None = None,
+    ) -> bool:
+        normalized_status = self._normalize_status(status, default="")
+        if not normalized_status:
+            raise ValueError(f"Unsupported lifecycle status: {status}")
+
+        lock_file = self._with_lock()
+        try:
+            with self._connect() as conn:
+                row = conn.execute(
+                    """
+                    SELECT * FROM skills
+                    WHERE user_id = ? AND skill_name = ? AND version = ?
+                    """,
+                    (user_id, skill_name, version),
+                ).fetchone()
+                if not row:
+                    return False
+
+                record = self._row_to_dict(row)
+                current_path = str(record.get("path") or "")
+                current_dir = Path(current_path) if current_path else None
+                target_dir = self._path_for_status(user_id, skill_name, version, normalized_status)
+                skill_md_content = str(record.get("skill_md_content") or "")
+                rules_json_content = str(record.get("rules_json_content") or "")
+
+                if current_dir and current_dir.exists():
+                    moved_to = self._move_tree(current_dir, target_dir)
+                    target_dir = moved_to
+                elif skill_md_content and rules_json_content:
+                    self._materialize_snapshot_dir(target_dir, skill_md_content, rules_json_content)
+
+                now_ts = int(time.time())
+                archived_ts = now_ts if normalized_status == "archived" else None
+                archived_reason = reason if normalized_status == "archived" else None
+                reviewed_ts = now_ts if normalized_status in {"rejected", "active"} else None
+
+                conn.execute(
+                    """
+                    UPDATE skills
+                    SET path = ?,
+                        status = ?,
+                        status_reason = ?,
+                        reviewed_ts = COALESCE(?, reviewed_ts),
+                        archived_ts = ?,
+                        archived_reason = ?,
+                        updated_ts = ?
+                    WHERE user_id = ? AND skill_name = ? AND version = ?
+                    """,
+                    (
+                        str(target_dir),
+                        normalized_status,
+                        reason,
+                        reviewed_ts,
+                        archived_ts,
+                        archived_reason,
+                        now_ts,
+                        user_id,
+                        skill_name,
+                        version,
+                    ),
+                )
+                conn.commit()
+                self._write_catalog_snapshot(user_id)
+                return True
+        finally:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+            lock_file.close()
+
+    def update_skill_contents_from_files(
+        self,
+        user_id: str,
+        skill_name: str,
+        version: str,
+    ) -> dict[str, Any] | None:
+        lock_file = self._with_lock()
+        try:
+            with self._connect() as conn:
+                row = conn.execute(
+                    """
+                    SELECT * FROM skills
+                    WHERE user_id = ? AND skill_name = ? AND version = ?
+                    """,
+                    (user_id, skill_name, version),
+                ).fetchone()
+                if not row:
+                    return None
+                record = self._row_to_dict(row)
+                current_path = str(record.get("path") or "")
+                if not current_path:
+                    return None
+
+                skill_dir = Path(current_path)
+                skill_md_path = skill_dir / "SKILL.md"
+                rules_json_path = skill_dir / "rules.json"
+                if not skill_md_path.exists() or not rules_json_path.exists():
+                    return None
+
+                skill_md_content = skill_md_path.read_text(encoding="utf-8")
+                rules_json_content = rules_json_path.read_text(encoding="utf-8")
+                rules_json = json.loads(rules_json_content)
+                content_hash = hashlib.md5((skill_md_content + rules_json_content).encode("utf-8")).hexdigest()
+                now_ts = int(time.time())
+
+                conn.execute(
+                    """
+                    UPDATE skills
+                    SET skill_md_content = ?,
+                        rules_json_content = ?,
+                        scene = ?,
+                        strategy = ?,
+                        rule_text = ?,
+                        confidence = ?,
+                        content_hash = ?,
+                        updated_ts = ?
+                    WHERE user_id = ? AND skill_name = ? AND version = ?
+                    """,
+                    (
+                        skill_md_content,
+                        rules_json_content,
+                        str(rules_json.get("scene", "")),
+                        str(rules_json.get("strategy", "")),
+                        str(rules_json.get("rule_text", "")),
+                        float(rules_json.get("confidence", 0.0) or 0.0),
+                        content_hash,
+                        now_ts,
+                        user_id,
+                        skill_name,
+                        version,
+                    ),
+                )
+                conn.commit()
+                self._write_catalog_snapshot(user_id)
+                return {
+                    "content_hash": content_hash,
+                    "updated_ts": now_ts,
+                    "scene": str(rules_json.get("scene", "")),
+                    "strategy": str(rules_json.get("strategy", "")),
+                    "rule_text": str(rules_json.get("rule_text", "")),
+                    "confidence": float(rules_json.get("confidence", 0.0) or 0.0),
+                }
+        finally:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+            lock_file.close()
 
     def seed_default_skills_for_user(
         self,
@@ -585,8 +1064,8 @@ class SkillDB:
             rows = conn.execute(
                 """
                 SELECT * FROM skills
-                WHERE user_id = ? AND path != ''
-                ORDER BY created_ts DESC
+                WHERE user_id = ? AND status = 'active'
+                ORDER BY COALESCE(updated_ts, created_ts) DESC
                 """,
                 (user_id,),
             ).fetchall()
@@ -597,12 +1076,51 @@ class SkillDB:
             rows = conn.execute(
                 """
                 SELECT * FROM skills
-                WHERE user_id = ? AND path = ''
-                ORDER BY archived_ts DESC
+                WHERE user_id = ? AND status = 'archived'
+                ORDER BY COALESCE(archived_ts, updated_ts, created_ts) DESC
                 """,
                 (user_id,),
             ).fetchall()
         return [self._row_to_dict(r) for r in rows]
+
+    def list_skill_versions(
+        self,
+        user_id: str,
+        lifecycle_status: str | None = None,
+        app: str | None = None,
+        query: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[List[Dict[str, Any]], int]:
+        where = ["user_id = ?"]
+        params: list[Any] = [user_id]
+        if lifecycle_status and lifecycle_status != "all":
+            where.append("status = ?")
+            params.append(lifecycle_status)
+        if app:
+            where.append("(scene LIKE ? OR rule_text LIKE ?)")
+            params.extend([f"%{app}%", f"%{app}%"])
+        if query:
+            where.append("(skill_name LIKE ? OR scene LIKE ? OR rule_text LIKE ? OR strategy LIKE ?)")
+            params.extend([f"%{query}%"] * 4)
+        where_clause = " AND ".join(where)
+
+        with self._connect() as conn:
+            total = conn.execute(
+                f"SELECT COUNT(*) FROM skills WHERE {where_clause}",
+                params,
+            ).fetchone()[0]
+            offset = (page - 1) * page_size
+            rows = conn.execute(
+                f"""
+                SELECT * FROM skills
+                WHERE {where_clause}
+                ORDER BY COALESCE(updated_ts, archived_ts, created_ts) DESC
+                LIMIT ? OFFSET ?
+                """,
+                [*params, page_size, offset],
+            ).fetchall()
+        return [self._row_to_dict(r) for r in rows], int(total)
 
     def get_skill_history(self, user_id: str, skill_name: str) -> List[Dict[str, Any]]:
         with self._connect() as conn:
@@ -752,6 +1270,7 @@ class SkillDB:
         result = None
         if row:
             result = self._row_to_dict(row)
+            result["source_table"] = "skills"
         else:
             # 2. 如果 skills 表没有，查询 sop_version 表
             with self._connect() as conn:
@@ -764,6 +1283,7 @@ class SkillDB:
                 ).fetchone()
             if row:
                 result = self._row_to_dict(row)
+                result["source_table"] = "sop_version"
 
         if not result:
             return None
@@ -783,6 +1303,9 @@ class SkillDB:
                 except Exception:
                     result["rules_json_content"] = None
 
+        result["status"] = self._normalize_status(result.get("status"), default="active" if result.get("path") else "archived")
+        result["storage_bucket"] = self._storage_bucket(str(result.get("path") or ""))
+
         return result
 
     def get_all_active_hashes(self, user_id: str) -> Dict[str, str]:
@@ -790,7 +1313,7 @@ class SkillDB:
             rows = conn.execute(
                 """
                 SELECT skill_name, content_hash FROM skills
-                WHERE user_id = ? AND path != ''
+                WHERE user_id = ? AND status = 'active'
                 """,
                 (user_id,),
             ).fetchall()
@@ -803,29 +1326,48 @@ class SkillDB:
         return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(ts)))
 
     def generate_catalog_snapshot(self, user_id: str) -> str:
-        active = self.get_active_skills(user_id)
-        archived = self.get_archived_skills(user_id)
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT * FROM skills
+                WHERE user_id = ?
+                ORDER BY COALESCE(updated_ts, archived_ts, created_ts) DESC
+                """,
+                (user_id,),
+            ).fetchall()
+        by_status: dict[str, List[Dict[str, Any]]] = {status: [] for status in self.SKILL_LIFECYCLE_STATES}
+        for row in rows:
+            item = self._row_to_dict(row)
+            status = self._normalize_status(item.get("status"))
+            by_status.setdefault(status, []).append(item)
 
         lines: List[str] = []
         lines.append(f"# Skill 目录 - {user_id}\n")
         lines.append(f"更新时间：{self._format_ts(int(time.time()))}\n\n")
 
-        lines.append(f"## Active（{len(active)}条）\n\n")
-        for row in active:
-            lines.append(f"### {row.get('skill_name', '')}（{row.get('version', '')}）\n")
-            lines.append(f"- 场景：{row.get('scene', '')}\n")
-            lines.append(f"- 策略：{row.get('strategy', '')}\n")
-            lines.append(f"- 规则：{row.get('rule_text', '')}\n")
-            lines.append(f"- 置信度：{row.get('confidence', 0)}\n")
-            lines.append(f"- 生效时间：{self._format_ts(row.get('created_ts'))}\n\n")
-
-        lines.append(f"## Archived（{len(archived)}条）\n\n")
-        for row in archived:
-            lines.append(f"### {row.get('skill_name', '')}（{row.get('version', '')}）\n")
-            lines.append(f"- 规则：{row.get('rule_text', '')}\n")
-            lines.append(f"- 归档原因：{row.get('archived_reason', '')}\n")
-            lines.append(f"- 被替代为：{row.get('superseded_by', '')}\n")
-            lines.append(f"- 归档时间：{self._format_ts(row.get('archived_ts'))}\n\n")
+        section_titles = {
+            "active": "Active",
+            "pending": "Pending Review",
+            "draft": "Draft",
+            "rejected": "Rejected",
+            "archived": "Archived",
+        }
+        for status in ("active", "pending", "draft", "rejected", "archived"):
+            items = by_status.get(status, [])
+            lines.append(f"## {section_titles[status]}（{len(items)}条）\n\n")
+            for row in items:
+                lines.append(f"### {row.get('skill_name', '')}（{row.get('version', '')}）\n")
+                lines.append(f"- 场景：{row.get('scene', '')}\n")
+                lines.append(f"- 策略：{row.get('strategy', '')}\n")
+                lines.append(f"- 规则：{row.get('rule_text', '')}\n")
+                lines.append(f"- 状态：{status}\n")
+                lines.append(f"- 置信度：{row.get('confidence', 0)}\n")
+                lines.append(f"- 更新时间：{self._format_ts(row.get('updated_ts') or row.get('created_ts'))}\n")
+                if status == "archived":
+                    lines.append(f"- 归档原因：{row.get('archived_reason', '')}\n")
+                if status == "rejected":
+                    lines.append(f"- 驳回原因：{row.get('status_reason', '')}\n")
+                lines.append("\n")
 
         return "".join(lines)
 
@@ -1037,6 +1579,8 @@ class SkillDB:
         skill_md_content: str,
         scripts_json: Optional[str] = None,
         rules_json_content: Optional[str] = None,
+        status: str = "active",
+        status_reason: Optional[str] = None,
     ) -> bool:
         """发布 SOP 版本"""
         lock_file = self._with_lock()
@@ -1044,6 +1588,21 @@ class SkillDB:
             with self._connect() as conn:
                 now_ts = int(time.time())
                 source_sessions_json = json.dumps(source_sessions, ensure_ascii=False)
+                normalized_status = self._normalize_status(status)
+
+                if normalized_status == "active":
+                    conn.execute(
+                        """
+                        UPDATE sop_version
+                        SET status = 'archived',
+                            status_reason = 'superseded',
+                            reviewed_ts = ?,
+                            updated_ts = ?,
+                            archived_ts = ?
+                        WHERE user_id = ? AND skill_name = ? AND status = 'active'
+                        """,
+                        (now_ts, now_ts, now_ts, user_id, skill_name),
+                    )
 
                 try:
                     conn.execute(
@@ -1053,8 +1612,8 @@ class SkillDB:
                           app_context, task_description, confidence,
                           source_sessions, skill_md_content,
                           scripts_json, rules_json_content,
-                          status, created_ts
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)
+                          status, status_reason, reviewed_ts, updated_ts, archived_ts, created_ts
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             user_id,
@@ -1068,6 +1627,11 @@ class SkillDB:
                             skill_md_content,
                             scripts_json,
                             rules_json_content,
+                            normalized_status,
+                            status_reason,
+                            now_ts if normalized_status in {"active", "rejected", "archived"} else None,
+                            now_ts,
+                            now_ts if normalized_status == "archived" else None,
                             now_ts,
                         ),
                     )
@@ -1130,20 +1694,94 @@ class SkillDB:
         user_id: str,
         skill_name: str,
         version: str,
+        reason: str = "archived",
     ) -> bool:
         """归档 SOP 版本"""
+        return self.set_sop_version_status(user_id, skill_name, version, status="archived", reason=reason)
+
+    def set_sop_version_status(
+        self,
+        user_id: str,
+        skill_name: str,
+        version: str,
+        status: str,
+        reason: str | None = None,
+    ) -> bool:
+        normalized_status = self._normalize_status(status, default="")
+        if not normalized_status:
+            raise ValueError(f"Unsupported lifecycle status: {status}")
+
         lock_file = self._with_lock()
         try:
             with self._connect() as conn:
-                conn.execute(
-                    "UPDATE sop_version SET status = 'archived' WHERE user_id = ? AND skill_name = ? AND version = ?",
+                row = conn.execute(
+                    """
+                    SELECT id, status FROM sop_version
+                    WHERE user_id = ? AND skill_name = ? AND version = ?
+                    """,
                     (user_id, skill_name, version),
+                ).fetchone()
+                if not row:
+                    return False
+
+                now_ts = int(time.time())
+                if normalized_status == "active":
+                    conn.execute(
+                        """
+                        UPDATE sop_version
+                        SET status = 'archived',
+                            status_reason = 'superseded',
+                            reviewed_ts = ?,
+                            updated_ts = ?,
+                            archived_ts = ?
+                        WHERE user_id = ? AND skill_name = ? AND version != ? AND status = 'active'
+                        """,
+                        (now_ts, now_ts, now_ts, user_id, skill_name, version),
+                    )
+
+                reviewed_ts = now_ts if normalized_status in {"active", "rejected", "archived"} else None
+                archived_ts = now_ts if normalized_status == "archived" else None
+                conn.execute(
+                    """
+                    UPDATE sop_version
+                    SET status = ?,
+                        status_reason = ?,
+                        reviewed_ts = COALESCE(?, reviewed_ts),
+                        updated_ts = ?,
+                        archived_ts = ?
+                    WHERE user_id = ? AND skill_name = ? AND version = ?
+                    """,
+                    (
+                        normalized_status,
+                        reason,
+                        reviewed_ts,
+                        now_ts,
+                        archived_ts,
+                        user_id,
+                        skill_name,
+                        version,
+                    ),
                 )
                 conn.commit()
                 return True
         finally:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
             lock_file.close()
+
+    def activate_sop_version(
+        self,
+        user_id: str,
+        skill_name: str,
+        version: str,
+        reason: str = "review_approved",
+    ) -> bool:
+        return self.set_sop_version_status(
+            user_id=user_id,
+            skill_name=skill_name,
+            version=version,
+            status="active",
+            reason=reason,
+        )
 
     def get_ready_drafts_for_publish(
         self,
@@ -1807,6 +2445,23 @@ class SkillDB:
 
     # ===== Notifications =====
 
+    def get_notification(
+        self,
+        user_id: str,
+        notif_id: int,
+    ) -> Optional[Dict[str, Any]]:
+        """获取单条通知。"""
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT * FROM notifications
+                WHERE user_id = ? AND id = ?
+                LIMIT 1
+                """,
+                (user_id, notif_id),
+            ).fetchone()
+        return self._row_to_dict(row) if row else None
+
     def get_notifications(
         self,
         user_id: str,
@@ -1891,24 +2546,37 @@ class SkillDB:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
             lock_file.close()
 
-    def mark_notification_read(self, user_id: str, notif_id: int) -> bool:
-        """标记单条通知为已读。"""
+    def set_notification_status(
+        self,
+        user_id: str,
+        notif_id: int,
+        status: str,
+        mark_read: bool = True,
+    ) -> bool:
+        """统一更新通知状态。"""
+        if status not in {"pending", "confirmed", "dismissed"}:
+            raise ValueError(f"Unsupported notification status: {status}")
+
         lock_file = self._with_lock()
         try:
             with self._connect() as conn:
                 cursor = conn.execute(
                     """
                     UPDATE notifications
-                    SET read_ts = ?, status = 'confirmed'
-                    WHERE id = ? AND user_id = ? AND read_ts IS NULL
+                    SET status = ?, read_ts = ?
+                    WHERE id = ? AND user_id = ?
                     """,
-                    (int(time.time()), notif_id, user_id),
+                    (status, int(time.time()) if mark_read else None, notif_id, user_id),
                 )
                 conn.commit()
                 return cursor.rowcount > 0
         finally:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
             lock_file.close()
+
+    def mark_notification_read(self, user_id: str, notif_id: int) -> bool:
+        """标记单条通知为已读。"""
+        return self.set_notification_status(user_id, notif_id, "confirmed", mark_read=True)
 
     def mark_all_notifications_read(self, user_id: str) -> int:
         """全部标记为已读，返回影响行数。"""
@@ -1940,22 +2608,7 @@ class SkillDB:
 
     def dismiss_notification(self, user_id: str, notif_id: int) -> bool:
         """将通知标记为 dismissed（拒绝/忽略）。"""
-        lock_file = self._with_lock()
-        try:
-            with self._connect() as conn:
-                cursor = conn.execute(
-                    """
-                    UPDATE notifications
-                    SET read_ts = ?, status = 'dismissed'
-                    WHERE id = ? AND user_id = ?
-                    """,
-                    (int(time.time()), notif_id, user_id),
-                )
-                conn.commit()
-                return cursor.rowcount > 0
-        finally:
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
-            lock_file.close()
+        return self.set_notification_status(user_id, notif_id, "dismissed", mark_read=True)
 
     def seed_notifications(self, records: list[dict]) -> int:
         """批量写入通知记录（用于预制数据）。"""

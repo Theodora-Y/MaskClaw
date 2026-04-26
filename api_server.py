@@ -18,10 +18,10 @@ import logging
 import asyncio
 from pathlib import Path
 from skill_registry.skill_db import SkillDB
-from memory.chat_history_db import ChatHistoryDB
-from memory.rag_client import RAGClient
 from auth_router import auth_router
 from notifications_router import notifications_router
+from review_router import review_router
+from guard_router import guard_router
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -40,6 +40,8 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(notifications_router)
+app.include_router(review_router)
+app.include_router(guard_router)
 
 # ============== JWT 前端控制台专用路由（避免与 HMAC 端点冲突）==============
 # 前端通过 /console/* 调用，使用 Authorization: Bearer JWT 认证
@@ -786,6 +788,8 @@ def rag_query_skills(
 
     # 使用 ChromaDB 进行向量检索
     try:
+        from memory.rag_client import RAGClient
+
         rag = RAGClient()
         results = rag.query(
             query_text=query,

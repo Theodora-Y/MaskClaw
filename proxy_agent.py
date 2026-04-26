@@ -360,9 +360,9 @@ class MiniCPMClient:
     MAX_WIDTH = 4096
     MAX_HEIGHT = 4096
 
-    def __init__(self, api_url: str = "http://127.0.0.1:8000/chat",
+    def __init__(self, api_url: str | None = None,
                  max_width: int = None, max_height: int = None):
-        self.api_url = api_url
+        self.api_url = api_url or os.environ.get("MASKCLAW_MINICPM_PRIVACY_ENDPOINT", "http://127.0.0.1:8000/chat")
         # 支持运行时配置最大分辨率
         self.max_width = max_width or self.MAX_WIDTH
         self.max_height = max_height or self.MAX_HEIGHT
@@ -593,9 +593,30 @@ class SmartMasker:
                 print("⚠️ smart_masker 模块未找到")
                 return None
         return self._masker
-    
-    def mask(self, image_path: str, sensitive_texts: List[str],
-             output_path: Optional[str] = None) -> Dict[str, Any]:
+
+    def detect(self, image_path: str, sensitive_texts: List[str]) -> Dict[str, Any]:
+        """仅检测敏感区域，不修改图片。"""
+        masker = self._get_masker()
+        if masker is None:
+            return {"success": False, "error": "打码器不可用"}
+        try:
+            regions = masker.detect_sensitive_regions(image_path=image_path, sensitive_texts=sensitive_texts)
+            return {
+                "success": True,
+                "regions": regions,
+                "masked_count": len(regions),
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def mask(
+        self,
+        image_path: str,
+        sensitive_texts: List[str],
+        output_path: Optional[str] = None,
+        method: str = "blur",
+        return_regions: bool = False,
+    ) -> Dict[str, Any]:
         """对图片中的敏感信息进行打码"""
         masker = self._get_masker()
         if masker is None:
@@ -606,16 +627,28 @@ class SmartMasker:
             output_path = str(TEMP_DIR / filename)
         
         try:
-            result_path, masked_count = masker.mask_sensitive_info(
+            result = masker.mask_sensitive_info(
                 image_path=image_path,
                 sensitive_texts=sensitive_texts,
-                output_path=output_path
+                output_path=output_path,
+                method=method,
+                return_regions=return_regions,
             )
-            
+
+            if return_regions:
+                result_path, masked_count, regions = result
+                return {
+                    "success": True,
+                    "output_path": result_path,
+                    "masked_count": masked_count,
+                    "regions": regions,
+                }
+
+            result_path, masked_count = result
             return {
                 "success": True,
                 "output_path": result_path,
-                "masked_count": masked_count
+                "masked_count": masked_count,
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
