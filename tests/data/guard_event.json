@@ -1,0 +1,8 @@
+{
+  "user_id": "demo_UserC",
+  "app_context": "alipay",
+  "intent": "scan_pay",
+  "action": "send_message",
+  "field": "支付金额、商家信息",
+  "content": "支付截图包含商家名和金额"
+}

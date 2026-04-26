@@ -427,6 +427,10 @@ MaskClaw/
 
 <h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">快速开始</h2>
 
+如果你当前主要从 CLI 入口使用和部署 `MaskClaw`，推荐先阅读：
+
+- [CLI 与 serve 部署手册](docs/CLI_SERVE_GUIDE.md)
+
 <h3 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.15em; font-weight: bold; color: #2c3e50; border-left: 4px solid #3498db; padding-left: 10px; margin-top: 1.5em;">1. 安装依赖</h3>
 
 ```bash
@@ -501,6 +505,7 @@ curl -X POST http://localhost:8001/rules \
 | 文档 | 内容说明 |
 |:---|:---|
 | [系统架构](docs/ARCHITECTURE.md) | 系统整体设计与端云协同架构 |
+| [CLI 与 serve 部署手册](docs/CLI_SERVE_GUIDE.md) | CLI 安装、角色化服务编排、服务器完整验收标准 |
 | [Skills API](docs/SKILLS_API.md) | 三大核心 Skills 的输入输出契约 |
 | [RAG 数据模式](docs/RAG_SCHEMA.md) | ChromaDB 向量数据库的存储范式 |
 | [Prompt 模板](docs/PROMPT_TEMPLATES.md) | 端侧 LLM 推理与代码生成的模板 |

@@ -50,6 +50,14 @@ __pycache__/
 .eggs/
 dist/
 build/
+.maskclaw/
+.maskclaw_test_config.json
+.pytest_tmp/
+.pytest_tmp_smoke.db
+.pytest_tmp_smoke.db.lock
+.pip_tmp*/
+.maskclaw_prefix*/
+netstat_maskclaw_tmp.txt
 
 # ========================
 # IDE / OS
@@ -64,6 +72,7 @@ build/
 # Logs
 # ========================
 *.log
+logs/
 docker-compose.yml
 maskclaw.db
 preset_demo_accounts.sql
