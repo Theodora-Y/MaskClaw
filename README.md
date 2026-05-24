@@ -1,73 +1,73 @@
 # MaskClaw
 
-面向端侧 Agent 的隐私保护与规则自演化框架。
+An on-device privacy protection and self-evolving rule extraction framework for agent systems.
 
-本仓库为匿名评审版本，仅保留方法、数据规模、运行入口与 API 概要。
+This is an anonymized review version that only keeps the method overview, data scale, run commands, and API summary.
 
-## 项目概述
+## Overview
 
-MaskClaw 旨在为端侧 Agent 提供执行前隐私保护层。系统在 Agent 执行截图分析、表单填写、文件传输、消息发送等操作之前，对潜在敏感信息和操作风险进行识别、判定与脱敏，并通过用户反馈持续优化个性化隐私规则。
+MaskClaw provides a privacy protection layer before an on-device agent executes actions such as screenshot analysis, form filling, file transfer, or message sending. It identifies sensitive information, estimates operation risk, applies masking when needed, and updates personalized privacy rules from user feedback.
 
-系统强调以下目标：
+The framework focuses on:
 
-- 端侧处理：敏感内容尽量在本地完成识别、推理与脱敏。
-- 上下文感知：不仅识别固定格式的敏感字段，也结合任务意图和操作场景进行判断。
-- 人机协同：在低置信度或新场景下请求用户确认。
-- 规则演化：从用户纠正、拒绝和确认行为中提取新的隐私规则。
+- On-device processing: sensitive content is handled locally whenever possible.
+- Context-aware judgment: decisions consider task intent and operation context, not only fixed-format patterns.
+- Human-in-the-loop confirmation: uncertain or unseen cases can be routed to the user.
+- Rule evolution: user corrections, rejections, and confirmations are used to improve privacy rules.
 
-## 核心模块
+## Core Modules
 
 ### Smart Masker
 
-视觉脱敏模块，用于识别截图或界面图像中的敏感区域，并进行本地遮盖、模糊或像素化处理。
+Identifies sensitive regions in screenshots or interface images and applies local visual masking, blurring, or pixelation.
 
 ### Behavior Monitor
 
-行为监控模块，用于记录 Agent 操作、用户纠正行为、拒绝操作和确认反馈，为后续规则演化提供依据。
+Records agent actions and user feedback, including corrections, rejected operations, and confirmation decisions.
 
 ### Skill Evolution
 
-规则自演化模块，用于从行为日志中归纳隐私策略，并在验证后更新个人化规则库。
+Extracts privacy rules from behavior logs and updates the personalized rule base after validation.
 
-## 系统流程
+## Workflow
 
 ```text
-端侧截图/界面状态
-    -> 敏感信息识别
-    -> 规则检索与上下文判断
-    -> 风险决策
-    -> 必要时脱敏或请求确认
-    -> 安全转发给 Agent
+On-device screenshot / UI state
+    -> Sensitive information detection
+    -> Rule retrieval and contextual reasoning
+    -> Risk decision
+    -> Masking or user confirmation when needed
+    -> Safe forwarding to the agent
 ```
 
-## 数据与评测
+## Data and Evaluation
 
-实验使用的 P-GUI-Evo 数据集包含 800+ 条样本，覆盖多类用户画像、真实操作场景、泛化变体和风险标签。
+The experiments use the P-GUI-Evo dataset with 800+ samples covering multiple user profiles, operation scenarios, generalization variants, and risk labels.
 
-| 维度 | 说明 |
+| Dimension | Description |
 |:---|:---|
-| 样本规模 | 800+ 条 |
-| 用户画像 | 多类用户设定 |
-| 场景类型 | 表单填写、消息发送、文件处理、账号操作等 |
-| 泛化变体 | 截图劣化、指令改写、界面结构扰动等 |
-| 决策标签 | Allow / Block / Mask / Ask / Unsure |
+| Sample size | 800+ samples |
+| User profiles | Multiple user settings |
+| Scenario types | Form filling, message sending, file handling, account operations, and related tasks |
+| Generalization variants | Screenshot degradation, instruction rewriting, UI structure perturbation, and related variants |
+| Decision labels | Allow / Block / Mask / Ask / Unsure |
 
-评测关注两类能力：
+Evaluation focuses on two aspects:
 
-- 判断一致性：系统是否能对 Agent 操作给出正确风险决策。
-- 规则抽取质量：系统是否能从用户反馈中提取可泛化的隐私规则。
+- Decision consistency: whether the system makes correct risk decisions for agent actions.
+- Rule extraction quality: whether the system extracts generalizable privacy rules from user feedback.
 
-## 与常见方案的区别
+## Comparison
 
-| 维度 | MaskClaw | 传统格式检测 | 云端审计 |
+| Dimension | MaskClaw | Format-based detection | Cloud audit |
 |:---|:---:|:---:|:---:|
-| 上下文理解 | 支持 | 弱 | 支持 |
-| 个性化规则 | 支持 | 弱 | 通常不支持 |
-| 端侧处理 | 支持 | 可支持 | 不支持 |
-| 规则自演化 | 支持 | 不支持 | 通常不支持 |
-| 不确定性处理 | 支持 | 不支持 | 依赖具体实现 |
+| Context understanding | Supported | Weak | Supported |
+| Personalized rules | Supported | Weak | Usually unsupported |
+| On-device processing | Supported | Possible | Unsupported |
+| Rule self-evolution | Supported | Unsupported | Usually unsupported |
+| Uncertainty handling | Supported | Unsupported | Implementation-dependent |
 
-## 项目结构
+## Project Structure
 
 ```text
 MaskClaw/
@@ -85,36 +85,36 @@ MaskClaw/
 +-- windows_sdk/
 ```
 
-## 快速开始
+## Quick Start
 
-安装依赖：
+Install dependencies:
 
 ```bash
 pip install chromadb rapidocr-onnxrunner onnxruntime pillow opencv-python fastapi uvicorn requests transformers torch
 ```
 
-启动模型服务：
+Start the model service:
 
 ```bash
 cd model_server
 python minicpm_api.py
 ```
 
-启动隐私代理服务：
+Start the privacy proxy service:
 
 ```bash
 python api_server.py
 ```
 
-## API 简述
+## API Summary
 
-| 接口 | 功能 |
+| Endpoint | Function |
 |:---|:---|
-| `GET /` | 健康检查 |
-| `POST /process` | 输入截图和任务指令，返回脱敏结果 |
-| `GET /rules` | 查看当前规则 |
-| `POST /rules` | 添加或更新规则 |
+| `GET /` | Health check |
+| `POST /process` | Process a screenshot and return the masked result |
+| `GET /rules` | View current rules |
+| `POST /rules` | Add or update rules |
 
-## 伦理声明
+## Ethics Statement
 
-本项目面向隐私保护、风险识别和安全治理，不用于身份认证、惩罚性决策或不可申诉的自动化处置。高风险场景应保留人工复核和申诉机制。系统应遵循数据最小化原则，仅在必要时执行脱敏、阻断或用户确认。
+This project is intended for privacy protection, risk identification, and security governance. It should not be used for identity authentication, punitive decisions, or non-appealable automated enforcement. High-risk scenarios should retain human review and appeal mechanisms. The system should follow the principle of data minimization and apply masking, blocking, or user confirmation only when necessary.
