@@ -529,17 +529,26 @@ curl -X POST http://localhost:8001/rules \
 
 ---
 
+
 <h2 style="font-family: Georgia, 'Times New Roman', serif; font-size: 1.5em; font-weight: bold; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 6px; margin-top: 2em;">引用</h2>
 
+如果您觉得我们的代码或数据集有帮助，请引用我们的论文：
+
+**MaskClaw: Edge-Side Personalized Privacy Protection for GUI Agents with Self-Evolving Skills**
+> **Yanqiu Zhao\***, **Dongying Zheng\***, Kaibo Huang, Yukun Wei, Zhongliang Yang, Linna Zhou.（共同一作，作者按字母序排列）
+
 ```bibtex
-@misc{maskclaw_2026,
-  title        = {MaskClaw: On-device Privacy-Preserving Framework with Self-Evolving Rule Extraction for Agent Systems},
-  author       = {Dongying Zheng and Yanqiu Zhao and Kaibo Huang and Yukun Wei and Zhongliang Yang and Linna Zhou},
-  year         = {2026},
-  howpublished = {https://github.com/Theodora-Y/MaskClaw},
-  note         = {GitHub repository}
+@misc{zhao2026maskclawedgesidepersonalizedprivacy,
+      title={MaskClaw: Edge-Side Personalized Privacy Protection for GUI Agents with Self-Evolving Skills}, 
+      author={Yanqiu Zhao and Dongying Zheng and Kaibo Huang and Yukun Wei and Zhongliang Yang and Linna Zhou},
+      year={2026},
+      eprint={2605.28646},
+      archivePrefix={arXiv},
+      primaryClass={cs.CR},
+      url={https://arxiv.org/abs/2605.28646}, 
 }
 ```
+
 
 ---
 *Made with ❤️ by MaskClaw Team • 2026*
