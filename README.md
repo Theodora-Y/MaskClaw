@@ -14,6 +14,9 @@
   <a href="https://www.python.org/">
     <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
   </a>
+  <a href="https://arxiv.org/abs/2605.28646">
+    <img src="https://img.shields.io/badge/Paper-arXiv-red" alt="Paper" />
+  </a>
   <a href="#">
     <img src="https://img.shields.io/badge/MiniCPM-V_4.5-FF6B6B?style=flat-square" alt="MiniCPM" />
   </a>
