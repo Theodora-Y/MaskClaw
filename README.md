@@ -537,12 +537,12 @@ curl -X POST http://localhost:8001/rules \
 
 如果您觉得我们的代码或数据集有帮助，请引用我们的论文：
 
-**MaskClaw: Edge-Side Personalized Privacy Protection for GUI Agents with Self-Evolving Skills**
+**MaskClaw: Edge-Side Personalized Privacy Arbitration for GUI Agents with Behavior-Driven Skill Evolution**
 > **Yanqiu Zhao\***, **Dongying Zheng\***, Kaibo Huang, Yukun Wei, Zhongliang Yang, Linna Zhou.（共同一作，作者按字母序排列）
 
 ```bibtex
 @misc{zhao2026maskclawedgesidepersonalizedprivacy,
-      title={MaskClaw: Edge-Side Personalized Privacy Protection for GUI Agents with Self-Evolving Skills}, 
+      title={MaskClaw: Edge-Side Personalized Privacy Arbitration for GUI Agents with Behavior-Driven Skill Evolution}, 
       author={Yanqiu Zhao and Dongying Zheng and Kaibo Huang and Yukun Wei and Zhongliang Yang and Linna Zhou},
       year={2026},
       eprint={2605.28646},
