@@ -1,0 +1,515 @@
+{
+  "version": "1.1",
+  "description": "MaskClaw 端侧隐私规则种子库；规则只描述策略，不包含真实个人数据。",
+  "rules": [
+    {
+      "rule_id": "pii.phone.external",
+      "name": "手机号发给外部接收方",
+      "description": "手机号属于直接身份标识，向陌生人、公开群聊或第三方应用展示时仅保留必要片段，其余局部打码。",
+      "action": "MASK",
+      "pii_types": ["phone", "手机号", "电话号码"],
+      "recipients": ["陌生人", "外部", "公开群", "第三方", "unknown"],
+      "sensitivities": ["high", "直接身份标识"],
+      "priority": 90
+    },
+    {
+      "rule_id": "pii.phone.user_requested_send",
+      "name": "用户明确发送自己的手机号",
+      "description": "用户明确要求把自己的手机号发送给已确认联系人时，可允许发送；仍应保留审计记录。",
+      "action": "ALLOW",
+      "pii_types": ["phone", "手机号"],
+      "task_intents": ["发送给已确认联系人", "本人联系方式"],
+      "recipients": ["已确认联系人", "本人"],
+      "priority": 86
+    },
+    {
+      "rule_id": "pii.phone.ambiguous",
+      "name": "手机号用途或接收方不明确",
+      "description": "手机号检测到但任务没有说明用途或接收方时，先询问用户，不得凭相似度自动放行。",
+      "action": "ASK",
+      "pii_types": ["phone", "手机号"],
+      "recipients": ["unknown"],
+      "priority": 88
+    },
+    {
+      "rule_id": "pii.id_card",
+      "name": "身份证件号码",
+      "description": "身份证号、护照号、驾驶证号等政府签发证件标识默认局部打码；只有明确的本地政务办理任务才进入确认。",
+      "action": "MASK",
+      "pii_types": ["id_card", "身份证号", "护照号", "驾驶证号"],
+      "sensitivities": ["critical", "高敏感"],
+      "priority": 100
+    },
+    {
+      "rule_id": "pii.id_card.official_task",
+      "name": "政务办理中的证件号码",
+      "description": "证件号码用于本地政务或银行身份核验时仍不能自动明文转发；需要用户确认目标应用、字段和接收方。",
+      "action": "ASK",
+      "pii_types": ["id_card", "身份证号", "护照号"],
+      "task_intents": ["政务办理", "身份核验", "银行开户"],
+      "apps": ["政务", "银行", "government", "bank"],
+      "priority": 105
+    },
+    {
+      "rule_id": "pii.medical_record",
+      "name": "病历与诊疗信息",
+      "description": "病历、检验结果、处方、诊断和就医记录属于医疗隐私；发给非医疗专业接收方时打码。",
+      "action": "MASK",
+      "pii_types": ["medical_record", "病历", "诊断", "处方", "检验结果"],
+      "sensitivities": ["critical", "医疗"],
+      "priority": 98
+    },
+    {
+      "rule_id": "pii.medical.provider",
+      "name": "发送给已确认医疗机构",
+      "description": "用户明确把病历发送给已确认的医院或医生时，不直接放行；向用户展示范围并请求确认。",
+      "action": "ASK",
+      "pii_types": ["medical_record", "病历", "诊断", "处方"],
+      "recipients": ["医生", "医院", "医疗机构"],
+      "task_intents": ["就医", "复诊", "医疗咨询"],
+      "priority": 105
+    },
+    {
+      "rule_id": "pii.financial.account",
+      "name": "银行卡和银行账户",
+      "description": "银行卡号、银行账户、余额和交易明细默认局部打码，避免把完整财务信息暴露给 Agent。",
+      "action": "MASK",
+      "pii_types": ["bank_card", "bank_account", "银行卡号", "银行账户", "余额", "交易明细"],
+      "sensitivities": ["critical", "金融"],
+      "priority": 100
+    },
+    {
+      "rule_id": "pii.payment.unknown_recipient",
+      "name": "支付订单和转账金额",
+      "description": "订单号、支付金额、收款人和转账信息发往外部或接收方不明时打码。",
+      "action": "MASK",
+      "pii_types": ["order_id", "payment_amount", "transaction", "订单号", "金额", "转账"],
+      "recipients": ["陌生人", "外部", "公开群", "第三方", "unknown"],
+      "sensitivities": ["high", "金融"],
+      "priority": 94
+    },
+    {
+      "rule_id": "pii.payment.execute",
+      "name": "执行支付或转账",
+      "description": "任何真实付款、转账、红包和提现动作都必须在执行前向用户确认；截图中金额可以先局部打码。",
+      "action": "ASK",
+      "pii_types": ["payment_amount", "transaction", "红包", "转账", "提现"],
+      "task_intents": ["付款", "转账", "发红包", "提现"],
+      "apps": ["支付宝", "微信支付", "银行", "payment"],
+      "priority": 110
+    },
+    {
+      "rule_id": "pii.password",
+      "name": "密码和认证口令",
+      "description": "密码、支付密码、PIN、恢复码和安全问题答案永远不能作为明文截图提供给云端 Agent。",
+      "action": "MASK",
+      "pii_types": ["password", "pin", "otp", "recovery_code", "密码", "验证码", "恢复码"],
+      "sensitivities": ["critical", "认证"],
+      "priority": 120
+    },
+    {
+      "rule_id": "pii.otp.action",
+      "name": "一次性验证码提交",
+      "description": "读取短信或邮件验证码后，只有用户明确要求且目标登录任务清晰时才允许继续；否则询问。",
+      "action": "ASK",
+      "pii_types": ["otp", "验证码", "一次性密码"],
+      "task_intents": ["登录", "验证身份", "注册"],
+      "priority": 118
+    },
+    {
+      "rule_id": "pii.address.external",
+      "name": "家庭和收货地址",
+      "description": "家庭地址、精确定位、收货地址和门牌号向外部接收方展示时局部打码。",
+      "action": "MASK",
+      "pii_types": ["address", "location", "home_address", "shipping_address", "地址", "定位"],
+      "recipients": ["陌生人", "外部", "公开群", "第三方", "unknown"],
+      "sensitivities": ["high", "位置"],
+      "priority": 92
+    },
+    {
+      "rule_id": "pii.address.navigation",
+      "name": "导航或本地配送任务中的地址",
+      "description": "地址用于本地导航或配送时，只在已确认的地图/配送应用内使用；跨应用转发前询问用户。",
+      "action": "ASK",
+      "pii_types": ["address", "location", "shipping_address"],
+      "task_intents": ["导航", "叫车", "配送", "外卖"],
+      "apps": ["地图", "高德", "百度地图", "滴滴", "外卖", "map"],
+      "priority": 96
+    },
+    {
+      "rule_id": "pii.contact.private",
+      "name": "联系人资料",
+      "description": "联系人姓名、头像、备注、邮箱和社交账号在群聊、公开发布或陌生接收方场景中打码。",
+      "action": "MASK",
+      "pii_types": ["contact", "person_name", "email", "联系人", "姓名", "邮箱", "社交账号"],
+      "recipients": ["陌生人", "外部", "公开群", "第三方", "unknown"],
+      "priority": 80
+    },
+    {
+      "rule_id": "pii.contact.confirmed",
+      "name": "已确认联系人聊天",
+      "description": "用户明确指定已确认联系人并要求发送时，联系人姓名和会话目标可保留，但消息中的其他敏感字段仍按各自规则处理。",
+      "action": "ALLOW",
+      "pii_types": ["person_name", "联系人"],
+      "task_intents": ["发送消息", "聊天"],
+      "recipients": ["已确认联系人"],
+      "priority": 75
+    },
+    {
+      "rule_id": "pii.private_message",
+      "name": "私人消息正文",
+      "description": "聊天正文、邮件正文和私密笔记若被提供给 Agent，默认只给必要片段；无法判断用途时打码。",
+      "action": "MASK",
+      "pii_types": ["private_message", "message_body", "聊天正文", "邮件正文", "私密笔记"],
+      "recipients": ["外部", "公开群", "第三方", "unknown"],
+      "priority": 84
+    },
+    {
+      "rule_id": "pii.photo.face",
+      "name": "人脸和生物特征",
+      "description": "人脸、指纹、声纹、虹膜等生物特征区域不能交给不必要的接收方；截图中优先局部遮盖。",
+      "action": "MASK",
+      "pii_types": ["face", "biometric", "人脸", "生物特征"],
+      "sensitivities": ["critical", "生物特征"],
+      "priority": 100
+    },
+    {
+      "rule_id": "pii.work_confidential",
+      "name": "工作机密和内部文档",
+      "description": "内部文档、合同、源代码、客户名单和未公开报价只允许在明确授权的本地任务中使用，其他场景询问。",
+      "action": "ASK",
+      "pii_types": ["work_confidential", "contract", "source_code", "客户名单", "合同", "内部文档"],
+      "recipients": ["外部", "第三方", "unknown"],
+      "sensitivities": ["high", "机密"],
+      "priority": 93
+    },
+    {
+      "rule_id": "pii.work_address.supplier_shipping",
+      "name": "已确认供应商获取工作发货地址",
+      "description": "用户为正常发货向已确认供应商提供自己的仓库或工作发货地址时允许该任务；不得扩展到家庭住址或公开发布。",
+      "action": "ALLOW",
+      "pii_types": ["work_address"],
+      "apps": ["微信", "钉钉", "飞书"],
+      "recipients": ["供应商"],
+      "context_terms": ["地址"],
+      "priority": 108
+    },
+    {
+      "rule_id": "pii.work_address.platform_delivery",
+      "name": "平台订单填写工作收货地址",
+      "description": "工作地址仅用于已确认配送平台的订单收货字段时允许填写。",
+      "action": "ALLOW",
+      "pii_types": ["work_address"],
+      "apps": ["美团", "淘宝", "拼多多", "京东"],
+      "recipients": ["平台系统"],
+      "context_terms": ["地址"],
+      "priority": 105
+    },
+    {
+      "rule_id": "pii.work_address.public",
+      "name": "工作地址公开展示",
+      "description": "仓库和工作地点向陌生人、公开群或直播观众展示时遮盖具体位置。",
+      "action": "MASK",
+      "pii_types": ["work_address"],
+      "recipients": ["陌生人", "公开群", "直播观众", "第三方"],
+      "priority": 98
+    },
+    {
+      "rule_id": "pii.payment_qr.fans",
+      "name": "本人收款码向粉丝展示",
+      "description": "用户明确展示自己的个人收款码用于收取粉丝打赏时允许展示；不代表允许代用户完成支付。",
+      "action": "ALLOW",
+      "pii_types": ["payment_qr_code"],
+      "apps": ["支付宝", "微信支付"],
+      "recipients": ["粉丝"],
+      "context_terms": ["收款码"],
+      "priority": 106
+    },
+    {
+      "rule_id": "pii.payment_qr.unknown_receiver",
+      "name": "收款码发给不明接收方",
+      "description": "收款码截图发送给陌生人或接收方不明时，先确认二维码用途和接收方。",
+      "action": "ASK",
+      "pii_types": ["payment_qr_code"],
+      "recipients": ["陌生人", "unknown", "第三方"],
+      "context_terms": ["收款码"],
+      "priority": 110
+    },
+    {
+      "rule_id": "pii.address.platform_delivery",
+      "name": "订单平台填写收货地址",
+      "description": "用户在已确认的订单平台为配送填写本人收货地址时允许该表单任务；跨应用转发仍另行判断。",
+      "action": "ALLOW",
+      "pii_types": ["address", "home_address", "shipping_address"],
+      "apps": ["美团", "淘宝", "拼多多", "京东", "顺丰"],
+      "recipients": ["平台系统"],
+      "context_terms": ["地址"],
+      "priority": 106
+    },
+    {
+      "rule_id": "pii.address.fans",
+      "name": "家庭住址向粉丝展示",
+      "description": "家庭住址发给粉丝或直播观众时遮盖精确位置。",
+      "action": "MASK",
+      "pii_types": ["address", "home_address"],
+      "recipients": ["粉丝", "直播观众"],
+      "priority": 108
+    },
+    {
+      "rule_id": "pii.address.local_favorite",
+      "name": "本地地图保存家庭位置",
+      "description": "地图应用保存常用家庭位置时，若后续用途和同步范围不明，先询问用户。",
+      "action": "ASK",
+      "pii_types": ["address", "home_address", "location"],
+      "apps": ["高德", "高德地图", "百度地图"],
+      "recipients": ["系统/本地", "系统本地"],
+      "context_terms": ["家庭"],
+      "priority": 104
+    },
+    {
+      "rule_id": "pii.medical.family_archive",
+      "name": "家庭成员就诊档案填写",
+      "description": "用户在已确认的医疗平台为家庭成员填写就诊档案时允许该本地表单任务，禁止扩展到对外分享。",
+      "action": "ALLOW",
+      "pii_types": ["medical_record"],
+      "apps": ["京东健康"],
+      "recipients": ["家庭成员/系统", "系统服务"],
+      "context_terms": ["家庭成员"],
+      "priority": 112
+    },
+    {
+      "rule_id": "pii.medical.external_consult",
+      "name": "病历发给外院会诊者",
+      "description": "向外院医生转发病历前，确认医生身份、会诊目的和需要披露的字段。",
+      "action": "ASK",
+      "pii_types": ["medical_record"],
+      "recipients": ["外院医生"],
+      "context_terms": ["会诊"],
+      "priority": 112
+    },
+    {
+      "rule_id": "pii.id_card.ticket_form",
+      "name": "实名购票证件填写",
+      "description": "用户明确在已确认的 12306 实名购票表单填写本人证件号时允许该表单任务；截图转发仍须重新评估。",
+      "action": "ALLOW",
+      "pii_types": ["id_card"],
+      "apps": ["12306"],
+      "recipients": ["平台系统"],
+      "context_terms": ["购票"],
+      "priority": 116
+    },
+    {
+      "rule_id": "pii.bank_card.merchant_settlement",
+      "name": "商家后台绑定结算卡",
+      "description": "用户在已确认商家后台填写自己的结算银行卡时允许该表单任务，不允许聊天中发送卡号。",
+      "action": "ALLOW",
+      "pii_types": ["bank_card", "bank_account"],
+      "apps": ["抖音小店", "微信小店", "淘宝商家"],
+      "recipients": ["平台系统"],
+      "context_terms": ["结算"],
+      "priority": 115
+    },
+    {
+      "rule_id": "pii.bank_account.colleague_reimbursement",
+      "name": "已确认同事的报销转账",
+      "description": "向已确认同事发起明确用途的费用报销转账时允许准备表单，实际付款仍须另行确认。",
+      "action": "ALLOW",
+      "pii_types": ["bank_account"],
+      "apps": ["支付宝"],
+      "recipients": ["同事"],
+      "context_terms": ["报销"],
+      "priority": 114
+    },
+    {
+      "rule_id": "pii.bank_account.stranger_transfer",
+      "name": "陌生账户转账确认",
+      "description": "向陌生账户转账前必须确认收款方身份和金额，不凭相似历史自动执行。",
+      "action": "ASK",
+      "pii_types": ["bank_account", "bank_card"],
+      "apps": ["支付宝", "工商银行", "银行"],
+      "recipients": ["陌生人", "陌生网购卖家"],
+      "context_terms": ["转账"],
+      "priority": 117
+    },
+    {
+      "rule_id": "pii.phone.colleague_work",
+      "name": "工作联系手机号发给同事",
+      "description": "用户明确为工作联系把本人手机号发给已确认同事时允许发送，公开资料和群聊不适用。",
+      "action": "ALLOW",
+      "pii_types": ["phone"],
+      "apps": ["钉钉", "飞书"],
+      "recipients": ["同事"],
+      "context_terms": ["工作联系"],
+      "priority": 109
+    },
+    {
+      "rule_id": "pii.phone.public_profile",
+      "name": "公开个人资料填写手机号",
+      "description": "手机号填入公开个人资料前询问用户可见范围，不按普通联系人发送规则直接放行。",
+      "action": "ASK",
+      "pii_types": ["phone"],
+      "apps": ["钉钉", "微信", "飞书"],
+      "recipients": ["公开"],
+      "context_terms": ["个人资料"],
+      "priority": 111
+    },
+    {
+      "rule_id": "pii.phone.live_audience",
+      "name": "直播中暴露手机号",
+      "description": "直播观众或粉丝可见的手机号码需遮盖。",
+      "action": "MASK",
+      "pii_types": ["phone"],
+      "recipients": ["直播观众", "粉丝"],
+      "priority": 108
+    },
+    {
+      "rule_id": "pii.address.platform_shipping_ui",
+      "name": "平台收货地址字段与界面变体",
+      "description": "已确认电商平台的收货地址表单，包括 Shipping Address 或住址字段，仅在平台订单任务中允许填写。",
+      "action": "ALLOW",
+      "pii_types": ["address", "home_address", "shipping_address"],
+      "apps": ["美团", "淘宝", "拼多多", "京东", "顺丰"],
+      "recipients": ["平台系统"],
+      "context_terms": ["收货"],
+      "priority": 106
+    },
+    {
+      "rule_id": "pii.medical.his_view",
+      "name": "医院内部病历页面",
+      "description": "已确认医院 HIS 系统内按用户任务读取病历页面时允许本系统展示；对外转发另行判断。",
+      "action": "ALLOW",
+      "pii_types": ["medical_record"],
+      "apps": ["医院HIS系统"],
+      "recipients": ["系统操作"],
+      "context_terms": ["病历页面"],
+      "priority": 114
+    },
+    {
+      "rule_id": "pii.id_card.enterprise_verification",
+      "name": "企业实名认证证件表单",
+      "description": "在已确认企业平台的实名认证流程中填写本人证件号时允许该表单任务。",
+      "action": "ALLOW",
+      "pii_types": ["id_card"],
+      "apps": ["钉钉"],
+      "recipients": ["平台系统"],
+      "context_terms": ["实名认证"],
+      "priority": 116
+    },
+    {
+      "rule_id": "pii.bank_card.reimbursement",
+      "name": "工作报销提供银行卡号",
+      "description": "在已确认的工作报销流程中向财务同事或已确认同事提供本人结算卡号时允许该任务。",
+      "action": "ALLOW",
+      "pii_types": ["bank_card"],
+      "apps": ["微信", "钉钉", "飞书"],
+      "recipients": ["同事", "财务同事"],
+      "context_terms": ["报销"],
+      "priority": 114
+    },
+    {
+      "rule_id": "pii.bank_card.family_transfer",
+      "name": "家庭资金往来提供银行卡号",
+      "description": "用户明确向已确认家人提供本人卡号用于家庭资金往来时允许该发送任务。",
+      "action": "ALLOW",
+      "pii_types": ["bank_card"],
+      "apps": ["微信"],
+      "recipients": ["家人"],
+      "context_terms": ["资金往来"],
+      "priority": 114
+    },
+    {
+      "rule_id": "pii.phone.courier_contact",
+      "name": "快递平台收件联系方式",
+      "description": "用户在已确认快递平台的收件人字段填写联系方式时允许该配送任务。",
+      "action": "ALLOW",
+      "pii_types": ["phone"],
+      "apps": ["顺丰"],
+      "recipients": ["平台系统"],
+      "context_terms": ["收件人"],
+      "priority": 108
+    },
+    {
+      "rule_id": "pii.phone.qq_colleague",
+      "name": "QQ 同事工作联系",
+      "description": "在已确认同事的 QQ 聊天中为工作联系提供手机号时允许该发送任务。",
+      "action": "ALLOW",
+      "pii_types": ["phone"],
+      "apps": ["QQ"],
+      "recipients": ["同事"],
+      "context_terms": ["工作"],
+      "priority": 108
+    },
+    {
+      "rule_id": "pii.name.public_profile",
+      "name": "本人公开资料实名填写",
+      "description": "用户明确在自己的微信个人资料中填写真实姓名时允许该资料任务。",
+      "action": "ALLOW",
+      "pii_types": ["person_name"],
+      "apps": ["微信"],
+      "recipients": ["公开"],
+      "context_terms": ["个人资料", "真实姓名"],
+      "priority": 100
+    },
+    {
+      "rule_id": "pii.bank_account.bank_transfer_confirmation",
+      "name": "银行汇款表单确认",
+      "description": "银行汇款页面中的收款账户和金额涉及真实转账，执行前询问用户确认。",
+      "action": "ASK",
+      "pii_types": ["bank_account"],
+      "apps": ["工商银行"],
+      "recipients": ["系统操作"],
+      "context_terms": ["汇款"],
+      "priority": 117
+    },
+    {
+      "rule_id": "pii.work_id.travel_approval",
+      "name": "医院内部出差审批字段",
+      "description": "已确认医院 OA 系统的出差审批单可填写工号、联系方式和邮箱；仅适用于该内部表单任务。",
+      "action": "ALLOW",
+      "pii_types": ["work_id", "phone", "email"],
+      "apps": ["医院OA系统"],
+      "recipients": ["系统操作"],
+      "context_terms": ["出差审批单"],
+      "priority": 116
+    },
+    {
+      "rule_id": "pii.third_party.other_buyer_info",
+      "name": "其他买家的订单资料",
+      "description": "把其他买家的订单资料发给当前买家会披露第三方隐私；暂停操作并核实授权。",
+      "action": "ASK",
+      "pii_types": ["other_buyer_info"],
+      "apps": ["微信"],
+      "recipients": ["粉丝/买家"],
+      "context_terms": ["其他买家"],
+      "priority": 118
+    },
+    {
+      "rule_id": "pii.third_party.supplier_address",
+      "name": "供应商仓库地址对外发送",
+      "description": "供应商的仓库地址属于第三方信息，向买家或粉丝发送前暂停并核实授权。",
+      "action": "ASK",
+      "pii_types": ["supplier_address"],
+      "apps": ["微信"],
+      "recipients": ["买家/粉丝"],
+      "context_terms": ["供应商仓库地址"],
+      "priority": 118
+    },
+    {
+      "rule_id": "unknown.sensitive_evidence",
+      "name": "未知敏感证据",
+      "description": "模型标记为敏感但无法归类或规则冲突时，暂停并请用户确认，不得默认允许。",
+      "action": "ASK",
+      "pii_types": ["unknown_sensitive", "unknown"],
+      "priority": 130
+    },
+    {
+      "rule_id": "safe.public_content",
+      "name": "公开且非个人内容",
+      "description": "公开网页、天气、普通商品描述和不含个人信息的页面可直接提供给 Agent。",
+      "action": "ALLOW",
+      "pii_types": ["public_content", "none"],
+      "task_intents": ["浏览公开网页", "查询天气", "查看商品"],
+      "priority": 20
+    }
+  ]
+}
